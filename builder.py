@@ -68,7 +68,6 @@ class Builder:
             #print(r)
             if 'retry_after' in r:
                 self._lock = True
-                #print('sleeping')
                 time.sleep(r['retry_after']/1000)
                 self._lock = False
                 return self.send_(url, json)
@@ -80,9 +79,3 @@ class Builder:
     def send_webhook(self, url):
         json = {"content": self.content, "embeds": self.embeds, "username": self.username, "avatar_url": self.avatar_url}
         return self.send_(url, json)
-        r = requests.post(url, json=json)
-        try:
-            r = r.json()
-        except:
-            r = r.reason
-        print(r)

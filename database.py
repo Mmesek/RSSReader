@@ -1,4 +1,3 @@
-#from __future__ import annotations
 from sqlalchemy import Column, String, Integer, BigInteger, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -29,26 +28,15 @@ class Database:
 
     def update(self, source: str, last: int) -> None:
         session = self.Session()
-        #sources = session.query(Sources.Source == source)
-        #sources.update({"Last":last})
         src = session.query(Sources).filter(Sources.Source == source).first()
         src.Last = last
-        #.update(Sources).where(Sources.Source==source).values(Last=last)
         session.commit()
     def getSources(self) -> list:  #(tuple(str)):
         session = self.Session()
         sources = session.query(Sources).all()
         sources = [(row.Source, row.Last, row.URL, row.Color, row.Language, row.AvatarURL) for row in sources]
         return sources
-        return [(
-                'Łowcy Gier', #Name
-                0, #Last
-                'https://lowcygier.pl/feed/', #Url
-                0, #Color
-                'pl', #Language
-                None, #Avatar
-                ),
-                ('PurePC', 0, 'https://www.purepc.pl/rss_all.xml', 1, 'pl', None)]
+        
     def getWebhooks(self) -> list:  #(str):
         session = self.Session()
         webhooks = session.query(Webhooks.Webhook, Webhooks.Source, Webhooks.Content, Webhooks.Regex).all()
@@ -59,11 +47,3 @@ class Database:
             webhooks_[webhook.Webhook] += [(row.Source, row.Content, row.Regex) for row in webhooks if row.Webhook == webhook.Webhook]
         
         return webhooks_
-        return [(
-            'WEBHOOK', #Webhook Url
-            [
-                ('Łowcy Gier', '@darmoffe', 'darmo'),
-                ('Łowcy Gier', None, None),  #Source, Content, Regex
-                ('PurePC', None, 'Netflix'),
-            ] #Included Sources
-        )]
