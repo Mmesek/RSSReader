@@ -81,7 +81,7 @@ class Parser:
 
     def parse(self, entry):
         if 'gry-online' in entry['link'] and entry['category'] not in {'gry', 'sprzęt i soft'}:
-            return {}
+            return []
         desc = bs(entry["description"], "html.parser")
         embed = Embed()
         embed.setColor(self.color)
@@ -126,7 +126,7 @@ class Parser:
         embed.setFooter("", ftext).setDescription(desc[:2023])#.replace(" * ", "\n").replace("______", "-")[:2023])
         if imag !='':
             size = getsizes(imag)
-            if size[1][0] == size[1][1] and size[1][0] < 800:
+            if (size[1][0] == size[1][1] and size[1][0] < 800) or size[1][0] < 400:
                 embed.setThumbnail(imag)
             else:
                 embed.setImage(imag)
