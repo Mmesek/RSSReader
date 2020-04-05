@@ -2,6 +2,7 @@ import feedparser, time, re, html2text
 from bs4 import BeautifulSoup as bs
 from builder import Embed
 from helpers import getsizes
+from parsers import *
 def Invalid(embed, desc):
     return desc
 
@@ -41,41 +42,11 @@ def steam(embed, desc):
     embed.setImage(imag)
     return desc
 
-def parseSteam(embed, desc):
-    h2t = html2text.HTML2Text()
-    h2tl = (
-        h2t.handle(desc.prettify())
-        .replace("\n [", "[")
-        .replace("\n]", "]")
-        .replace("[ ", "[")
-        .replace("{LINK REMOVED}", "")
-        .replace("\n\n", "\n")
-    )
-    links_all = re.findall(r"\((https://store.steam\S*)\)\s", h2tl)
-    for link in links_all:
-        if link[-1] != '/':
-            link+='/'
-        s = link.split("/")[-2].replace("_", " ")
-        h2tl = h2tl.replace(f"[\n", "[").replace(f"[{link}]({link})", "")
-        store_id = re.search(r'/\d+/', link)
-        if store_id is not None:
-            store_id = f'\nOpen in Steam: steam://store{store_id[0]}'
-        else:
-            store_id = ''
-        embed.addField("Steam Store", f"[{s}]({link}){store_id}", True)
-    events = re.findall(r"\((\S*/partnerevents/view/\S*)\)\s", h2tl)
-    for link in events:
-        h2tl = h2tl.replace(f"[\n", "[").replace(f"[{link}]({link})", "")
-        embed.addField("Steam Event", f"[View Event]({link})", True)
-    help_ = re.findall(r'\((https://help.steam\S*)\)\s', h2tl)
-    for link in help_:
-        h2tl = h2tl.replace(f"[\n", "[").replace(f"[{link}]({link})", "")
-        embed.addField("Steam Support", f"[{link.split('/')[-1]}]({link})", True)
-
-
 specifics = {
-    "nitter": nitter,
-    "steam": steam
+    "steam": parseSteam,
+    "purepc": parsePurePC,
+    "cd-action": parseCDAction,
+    "gg.deals": parseGGDeals,
 }
 
 class Parser:
@@ -109,6 +80,8 @@ class Parser:
                     self.embeds += [embed]
 
     def parse(self, entry):
+        if 'gry-online' in entry['link'] and entry['category'] not in {'gry', 'sprzęt i soft'}:
+            return {}
         desc = bs(entry["description"], "html.parser")
         embed = Embed()
         embed.setColor(self.color)
@@ -116,7 +89,7 @@ class Parser:
             embed.setTimestamp(time.strftime("%Y-%m-%dT%H:%M:%S", entry["published_parsed"]))
         except:
             embed.setTimestamp(time.strftime("%Y-%m-%dT%H:%M:%S", entry["updated_parsed"]))
-        embed.setTitle(entry["title"]).setUrl(entry["link"])
+        embed.setTitle(entry["title"]).setUrl(entry["link"].replace('nitter.net','twitter.com'))
         h2tl = desc.text
         try:
             imag = desc.find("img")["src"]
@@ -132,9 +105,11 @@ class Parser:
         for image in images:
             h2tl = h2tl.replace(f"{image}", "")
         #desc = specifics.get(self.name, Invalid)(embed, desc)
-        if 'steam' in self.url:
-            desc = parseSteam(embed, desc)
+        #if 'steam' in self.url:
+            #desc = parseSteam(embed, desc)
+
         #desc = steam(embed, desc)
+        desc_ = desc
         try:
             desc = h2tl[:2023]
         except Exception as ex:
@@ -143,9 +118,12 @@ class Parser:
             ftext = f"{entry['author']} @ {self.name}"
         else:
             ftext = self.name
-        if 'youtube' in self.url:
+        if any(s in self.url for s in ['youtube', 'nitter']):
             desc = ''
-        embed.setFooter("", ftext).setDescription(desc.replace(" * ", "\n").replace("______", "-")[:2023])
+        for s in specifics:
+            if s in self.url:
+                desc = specifics.get(s, Invalid)(embed, desc, entry, desc_)
+        embed.setFooter("", ftext).setDescription(desc[:2023])#.replace(" * ", "\n").replace("______", "-")[:2023])
         if imag !='':
             size = getsizes(imag)
             if size[1][0] == size[1][1] and size[1][0] < 800:
