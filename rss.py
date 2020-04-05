@@ -123,6 +123,7 @@ class Parser:
         for s in specifics:
             if s in self.url:
                 desc = specifics.get(s, Invalid)(embed, desc, entry, desc_)
+        desc = re.split(rf'(Informacja|Artykuł) {entry["title"]}', desc)[0].replace('Czytaj więcej...','')
         embed.setFooter("", ftext).setDescription(desc[:2023])#.replace(" * ", "\n").replace("______", "-")[:2023])
         if imag !='':
             size = getsizes(imag)
