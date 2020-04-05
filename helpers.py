@@ -1,5 +1,12 @@
+import re
+
 def filtr(embeds, regex):
-    return embeds
+    pattern = re.compile(regex)
+    e_ = []
+    for embed in embeds:
+        if pattern.search(embed) != None:
+            e_ += embed
+    return e_
 
 def chunks(array):
     for i in range(0, len(array), 10):
