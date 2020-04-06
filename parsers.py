@@ -5,18 +5,15 @@ def parseSteam(embed, desc, entry='', desc_=''):
     h2t = html2text.HTML2Text()
     h2tl = (
         h2t.handle(desc_.prettify())
-        #.replace('\n',' ')
-    #    .replace("\n [", "[")
-    #    .replace("\n]", "]")
-    #    .replace("[ ", "[")
         .replace("{LINK REMOVED}", "")
-    #    .replace("\n\n", "\n")
     )
     links = re.findall(r"(\n?\[((?s).*?)\]\n?\(((?s).*?)\)\n?)", h2tl)
     for l in links:
         if l[1].replace('\n','').strip() == l[2].replace('\n','').strip():
             h2tl = h2tl.replace(l[0], '/n'+l[0].replace('\n', '').replace(' ', ''))
     try:
+        #if desc.img["src"][-4:] != ".gif":
+            #imag = desc.img["src"]
         imag = desc.find("img")["src"]
     except:
         imag = ''
@@ -106,7 +103,10 @@ def parseGGDeals(embed, desc, entry, desc_):
     bdata = requests.get(entry['link'])
     soup = bs(bdata.text, 'html.parser')
     if 'choice' not in entry['link']:
-        glist = soup.find('div', class_='wrap_items').find('div', class_='list').findAll('a', class_='ellipsis title')  #.text
+        try:
+            glist = soup.find('div', class_='wrap_items').find('div', class_='list').findAll('a', class_='ellipsis title')  #.text
+        except:
+            return desc
     else:
         glist = soup.find('div', class_='text-content-wrapper news-content shadow-box box-assets-shadow box-assets-responsive').find('ul').findAll('li')
     desc = ''
