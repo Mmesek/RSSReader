@@ -5,7 +5,7 @@ def filtr(embeds, regex):
     e_ = []
     for embed in embeds:
         if pattern.search(embed['description']) != None or pattern.search(embed['title']) != None:
-            e_ += embed
+            e_ += [embed]
     return e_
 
 def chunks(array):

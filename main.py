@@ -32,6 +32,8 @@ def main():
         embeds = []
         sources = sorted(webhooks[webhook], key=lambda w: w[2] or "", reverse=True)
         srcs = [s[0] for s in sources]
+        content = ''
+        filtered = []
         for source in sources:
             e_ = []
             if source[0] == 'all':
@@ -41,11 +43,13 @@ def main():
             elif source[0] not in results:
                 continue
             elif source[2] != '':
-                filtered = helpers.filtr(results[source[0]], source[2])
+                filtered += helpers.filtr(results[source[0]], source[2])
                 results[source[0]] = [embed for embed in results[source[0]] if embed not in filtered]
                 src = source
-                build = builder.Builder(src[1], src[0], avatars[src[0]], embeds=filtered)
-                build.send_webhook(webhook)
+                if filtered != []:
+                    content += ' '+src[1]
+                    #build = builder.Builder(src[1], src[0], avatars[src[0]], embeds=filtered)
+                    #build.send_webhook(webhook)
             else:
                 build = builder.Builder()
                 if len(results) <= 5:
@@ -61,6 +65,9 @@ def main():
                 src= source
                 build = builder.Builder(src[1], src[0], avatars[src[0]], embeds=e_)
                 build.send_webhook(webhook)
+        if filtered != []:
+            build = builder.Builder(content, src[0], avatars[src[0]], embeds=filtered)
+            build.send_webhook(webhook)
         if len(embeds) > 10:
             for chunk in helpers.chunks(embeds):
                 #print('r')
