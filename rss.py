@@ -6,42 +6,6 @@ from parsers import *
 def Invalid(embed, desc):
     return desc
 
-def nitter(embed, entry, feed, desc):
-    if entry["author"] == "@DyingLightGame":
-        embed.setUrl(entry["link"].replace("nitter.net", "twitter.com")).setTitle(feed["title"]).setAuthor(
-            entry["author"], feed["link"].replace("nitter.net", "twitter.com"), feed["image"]["url"]
-        ).setDescription(entry["title"])
-    else:
-        return []
-    return desc
-
-def steam(embed, desc):
-    h2t = html2text.HTML2Text()
-    h2tl = (
-        h2t.handle(desc.prettify())
-        .replace("\n [", "[")
-        .replace("\n]", "]")
-        .replace("[ ", "[")
-        .replace("{LINK REMOVED}", "")
-        .replace("\n\n", "\n")
-    )
-    try:
-        if desc.img["src"][-4:] != ".gif":
-            imag = desc.img["src"]
-    except:
-        imag = ''
-    links_all = re.findall(r"\((https://store.steam\S*)\)\s", h2tl)
-    for link in links_all:
-        s = link.split("/")[-2].replace("_", " ")
-        h2tl = h2tl.replace(f"[\n", "[").replace(f"[{link}]({link})", "")
-        embed.addField("Steam Store", f"[{s}]({link})", True)
-    events = re.findall(r"\((\S*/partnerevents/view/\S*)\)\s", h2tl)
-    for link in events:
-        h2tl = h2tl.replace(f"[\n", "[").replace(f"[{link}]({link})", "")
-        embed.addField("Steam Event", f"[View Event]({link})", True)
-    embed.setImage(imag)
-    return desc
-
 specifics = {
     "steam": parseSteam,
     "purepc": parsePurePC,
@@ -104,11 +68,6 @@ class Parser:
         images = re.findall(r"\!\[\]\(\S*\)", h2tl)
         for image in images:
             h2tl = h2tl.replace(f"{image}", "")
-        #desc = specifics.get(self.name, Invalid)(embed, desc)
-        #if 'steam' in self.url:
-            #desc = parseSteam(embed, desc)
-
-        #desc = steam(embed, desc)
         desc_ = desc
         try:
             desc = h2tl[:2023]
@@ -118,13 +77,13 @@ class Parser:
             ftext = f"{entry['author']} @ {self.name}"
         else:
             ftext = self.name
-        if any(s in self.url for s in ['youtube', 'nitter']):
+        if any(s in self.url for s in ['youtube', 'nitter', 'chrono.gg']):
             desc = ''
         for s in specifics:
             if s in self.url:
                 desc = specifics.get(s, Invalid)(embed, desc, entry, desc_)
-        desc = re.split(rf'(Informacja|Artykuł) {entry["title"]}', desc)[0].replace('Czytaj więcej...','')
-        embed.setFooter("", ftext).setDescription(desc[:2023])#.replace(" * ", "\n").replace("______", "-")[:2023])
+        desc = re.split(rf'(Informacja|Artykuł|The post) {re.escape(entry["title"])}', desc)[0].replace('Czytaj więcej...','')
+        embed.setFooter("", ftext).setDescription(desc[:2023])
         if imag !='':
             size = getsizes(imag)
             if (size[1][0] == size[1][1] and size[1][0] < 800) or size[1][0] < 400:
