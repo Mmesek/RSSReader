@@ -98,11 +98,11 @@ def parseCDAction(embed, desc, entry='', desc_=''):
     return desc
 
 def parseGGDeals(embed, desc, entry, desc_):
-    if not any(t in entry['link'] for t in ['bundle', 'choice']):
+    if not any(t in entry['link'] for t in ['bundle', 'choice', 'game-pass', 'origin-access']):
         return desc
     bdata = requests.get(entry['link'])
     soup = bs(bdata.text, 'html.parser')
-    if 'choice' not in entry['link']:
+    if not any(t in entry['link'] for t in ['choice', 'game-pass', 'origin-access']):
         try:
             glist = soup.find('div', class_='wrap_items').find('div', class_='list').findAll('a', class_='ellipsis title')  #.text
         except:
