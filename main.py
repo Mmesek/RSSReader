@@ -18,14 +18,10 @@ def main():
     avatars = {}
     results_ = pool.map(fetch, sources)
     results_ = {sources[i][0]: x for i, x in enumerate(results_) if x != []}
-    for source in sources:
-    #    p = rss.Parser(db, source)
-    #    p.entries()
-    #    if p.embeds != []:
-    #        results_[source[0]] = p.embeds
-        avatars[source[0]] = source[5]
     if results_ == {}:
         return
+    for source in sources:
+        avatars[source[0]] = source[5]
     webhooks = db.getWebhooks()
     for webhook in webhooks:
         results = results_
@@ -48,34 +44,51 @@ def main():
                 src = source
                 if filtered != []:
                     content += ' '+src[1]
-                    #build = builder.Builder(src[1], src[0], avatars[src[0]], embeds=filtered)
-                    #build.send_webhook(webhook)
             else:
-                build = builder.Builder()
                 if len(results) <= 5:
-                    build.embeds = []
+                    _embeds = []
                     for src in sources:
                         if src[0] in results:
-                            if len(build.embeds) < 10:
-                                build.addEmbeds(results[src[0]])
-                    build.send_webhook(webhook)
+                                _embeds += results[src[0]]
+                    sendEmbeds(_embeds, webhook)
                     break
                 e_ += results[source[0]]
             if e_ != []:
-                src= source
-                build = builder.Builder(src[1], src[0], avatars[src[0]], embeds=e_)
-                build.send_webhook(webhook)
+                src = source
+                sendEmbeds(e_, webhook, src[1], src[0], avatars[src[0]])
         if filtered != []:
-            build = builder.Builder(content, src[0], avatars[src[0]], embeds=filtered)
+            sendEmbeds(filtered, webhook, content, src[0], avatars[src[0]])
+        if embeds != []:
+            sendEmbeds(embeds, webhook)
+
+
+def cumulative(embed):
+    total = 0
+    t = []
+    for field in embed.values():
+        if type(field) is not int:
+            t += field
+    for v in t:
+        total += len(v)
+    return total
+
+def sendEmbeds(embeds, webhook, content='', username=None, avatar_url=None):
+    total_characters = 0
+    build = builder.Builder(content, username, avatar_url, [])
+    for embed in embeds:
+        total = cumulative(embed)
+        if total_characters + total < 5500:
+            total_characters += total
+            build.addEmbed(embed)
+        else:
             build.send_webhook(webhook)
-        if len(embeds) > 10:
-            for chunk in helpers.chunks(embeds):
-                #print('r')
-                build = builder.Builder(embeds=chunk)
-                build.send_webhook(webhook)
-        elif embeds != []:
-            build = builder.Builder(embeds=embeds)
-            build.send_webhook(webhook)
+            build = builder.Builder(content, username, avatar_url, [])
+            build.addEmbed(embed)
+            total_characters = cumulative(embed)
+    if build.embeds != []:
+        build.send_webhook(webhook)
+
+        
 
 #import time
 
