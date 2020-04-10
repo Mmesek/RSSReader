@@ -1,4 +1,4 @@
-import feedparser, time, re, html2text
+import feedparser, time, re
 from bs4 import BeautifulSoup as bs
 from builder import Embed
 from helpers import getsizes
@@ -46,6 +46,8 @@ class Parser:
     def parse(self, entry):
         if 'gry-online' in entry['link'] and entry['category'] not in {'gry', 'sprzęt i soft'}:
             return []
+        elif 'steam' in entry['link'] and 'details for this event on the' in entry['description']:
+            return [] 
         desc = bs(entry["description"], "html.parser")
         embed = Embed()
         embed.setColor(self.color)
