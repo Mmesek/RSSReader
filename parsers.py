@@ -7,10 +7,15 @@ def parseSteam(embed, desc, entry='', desc_=''):
         h2t.handle(desc_.prettify())
         .replace("{LINK REMOVED}", "")
     )
-    links = re.findall(r"(\n?\[((?s).*?)\]\n?\(((?s).*?)\)\n?)", h2tl)
+    links = re.findall(r"( ?\n? ?\[((?s).*?) ?\n? ?\] ?\n? ?\(((?s).*?)\)\n?)", h2tl)
     for l in links:
         if l[1].replace('\n','').strip() == l[2].replace('\n','').strip():
-            h2tl = h2tl.replace(l[0], '/n'+l[0].replace('\n', '').replace(' ', ''))
+            h2tl = h2tl.replace(l[0], '/n' + l[0].replace('\n', '').replace(' ', ''))
+        if 'linkfilter' in l[2]:
+            nlink = l[2].split('linkfilter/?url=')[1].replace(' ','').replace('\n','')
+            h2tl = h2tl.replace(l[2], nlink)
+        h2tl = h2tl.replace(l[2], l[2].replace(' ', '').replace('\n', ''))
+        h2tl = h2tl.replace(l[1], l[1].replace('\n','').replace('[ ','[').replace(' ]',']'))
     try:
         #if desc.img["src"][-4:] != ".gif":
             #imag = desc.img["src"]
@@ -45,6 +50,10 @@ def parseSteam(embed, desc, entry='', desc_=''):
     for link in help_:
         h2tl = h2tl.replace(f"[\n", "[").replace(f"[{link}]({link})", "")
         embed.addField("Steam Support", f"[{link.split('/')[-1]}]({link})", True)
+    community = re.findall(r'(\[((?s).*?)\] ?\(((?s)steamcommunity.com\S*)\))', h2tl)
+    for link in community:
+        h2tl = h2tl.replace(f"[\n", "[").replace(f"[{link[0]}]({link[1]})", "")
+        embed.addField("Steam Community", f"[{link[0]}]({link[1]})", True)
     if '\n__' in h2tl:
         h2tl = re.sub('\n__', '/n----/n', h2tl)
         h2tl = re.sub('___', '', h2tl)
