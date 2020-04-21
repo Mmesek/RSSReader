@@ -12,6 +12,15 @@ def chunks(array):
     for i in range(0, len(array), 10):
         yield array[i:i+10]
 
+def cumulative(embed):
+    total = 0
+    t = []
+    for field in embed.values():
+        if type(field) is not int:
+            t += field
+    for v in t:
+        total += len(v)
+    return total
 
 import urllib
 from PIL import ImageFile

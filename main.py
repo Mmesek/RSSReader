@@ -62,15 +62,7 @@ def main():
             sendEmbeds(embeds, webhook)
 
 
-def cumulative(embed):
-    total = 0
-    t = []
-    for field in embed.values():
-        if type(field) is not int:
-            t += field
-    for v in t:
-        total += len(v)
-    return total
+from helpers import cumulative
 
 def sendEmbeds(embeds, webhook, content='', username=None, avatar_url=None):
     total_characters = 0
