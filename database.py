@@ -11,6 +11,9 @@ class Sources(Base):
     Color = Column(Integer)
     Language = Column(String)
     AvatarURL = Column(String)
+    #Type = Column(String)
+    #Interval = Column(Integer)
+    #LastFetched = Column(Integer)
 
 class Webhooks(Base):
     __tablename__ = 'Webhooks'
@@ -19,6 +22,12 @@ class Webhooks(Base):
     Source = Column(String, primary_key=True)
     Content = Column(String)
     Regex = Column(String)
+    AddedBy = Column(BigInteger)
+
+class Spotify(Base):
+    __tablename__ = 'Spotify'
+    SpotifyID = Column(String, primary_key=True)
+    Artist = Column(String)
     AddedBy = Column(BigInteger)
 
 class Database:
@@ -47,3 +56,34 @@ class Database:
             webhooks_[webhook.Webhook] += [(row.Source, row.Content, row.Regex) for row in webhooks if row.Webhook == webhook.Webhook]
         
         return webhooks_
+
+    def getSpotifyWebhooks(self) -> list:
+        session = self.Session()
+        webhooks = session.query(Webhooks.Webhook).filter(Webhooks.Source == 'Spotify').all()
+        return webhooks
+
+    def getObservedArtists(self) -> list:
+        session = self.Session()
+        artists = session.query(Spotify.SpotifyID, Spotify.Artist).all()
+        return artists
+        
+import configparser
+def ConfigToDict():
+    dictonary = {}
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+    sections = config.sections()
+    for section in sections:
+        dictonary[section] = {}
+        for option in config.options(section):
+            try:
+                value = config.get(section, option)
+                if value.isdigit():
+                    value = config.getint(section, option)
+                elif value.lower() in ['true', 'false', 'yes', 'no', 'on', 'off']:
+                    value = config.getboolean(section, option)
+                dictonary[section][option] = value
+            except Exception as ex:
+                print("Exception while reading from config file: ", ex)
+                dictonary[section][option] = None
+    return dictonary
