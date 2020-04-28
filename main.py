@@ -39,11 +39,13 @@ def main():
             elif source[0] not in results:
                 continue
             elif source[2] != '':
-                filtered += helpers.filtr(results[source[0]], source[2])
-                results[source[0]] = [embed for embed in results[source[0]] if embed not in filtered]
+                f_ = []
+                f_ += helpers.filtr(results[source[0]], source[2])
                 src = source
-                if filtered != []:
-                    content += ' '+src[1]
+                if f_ != []:
+                    content += ' ' + src[1]
+                filtered += f_                
+                results[source[0]] = [embed for embed in results[source[0]] if embed not in filtered]
             else:
                 if len(results) <= 5:
                     _embeds = []
