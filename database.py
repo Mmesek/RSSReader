@@ -68,10 +68,11 @@ class Database:
         return artists
         
 import configparser
+from os.path import dirname
 def ConfigToDict():
     dictonary = {}
     config = configparser.ConfigParser()
-    config.read('config.ini')
+    config.read(dirname(__file__)+'/config.ini')
     sections = config.sections()
     for section in sections:
         dictonary[section] = {}
