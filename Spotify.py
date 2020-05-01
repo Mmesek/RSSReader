@@ -100,6 +100,12 @@ class Spotify:
         thumbnail = ""
         nr = await self.new(market)
         ob = await self.observed(market)
+        import json
+        ob2 = []
+        for o in ob:
+            ob2 += [json.dumps(o)]
+        ob = [json.loads(o) for o in list(set(ob2))]
+        ob = sorted(ob, key=lambda o: o['artist'] or "", reverse=False)
         embed = builder.Embed().setColor(1947988).setAuthor(f"New Music - {self.date[:10]}", "https://open.spotify.com/browse/discover", "https://images-eu.ssl-images-amazon.com/images/I/51rttY7a%2B9L.png")
         for item in ob:
             if 'thumbnail' not in embed.embed:
@@ -116,7 +122,10 @@ class Spotify:
                 else:
                     if cumulative(embed.embed) + len(field1) < 5500:
                         embed.addField("\u200b", field1)
-                    field1=line
+                    field1 = line
+        if field1 != '':
+            embed.addField("\u200b", field1)
+            field1 = ''
         popular_field = False
         for item in nr:
             line = f"- {item['name']} - {item['artist'][0]}\n"
