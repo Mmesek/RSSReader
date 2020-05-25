@@ -11,6 +11,9 @@ specifics = {
     "purepc": parsePurePC,
     "cd-action": parseCDAction,
     "gg.deals": parseGGDeals,
+#    "lowcygier": parseLowcy,
+    "polskigamedev": polskigamdev,
+    "isthereanydeal": itad,
 }
 
 class Parser:
@@ -83,8 +86,29 @@ class Parser:
             desc = ''
         for s in specifics:
             if s in self.url:
-                desc = specifics.get(s, Invalid)(embed, desc, entry, desc_)
+                try:
+                    desc = specifics.get(s, Invalid)(embed, desc, entry, desc_)
+                except:
+                    desc = desc
         desc = re.split(rf'(Informacja|Artykuł|The post) {re.escape(entry["title"])}', desc)[0].replace('Czytaj więcej...','')
+        '''fields = []
+        if len(desc) > 2023:
+            des = ''
+            for line in desc.splitlines(True):
+                if (len(des + line) < 2023 and fields == []) or (len(des+line) < 1023 and fields != []):
+                    des += line
+                else:
+                    fields.append(des)
+                    des = ''
+            if des != '':
+                fields.append(des)
+        else:
+            fields.append(desc)
+        print(len(fields))
+        embed.setDescription(fields.pop(0)[:2023])
+        print(len(fields))
+        for field in fields:
+            embed.addField('\u200b', field[:1023])'''
         embed.setFooter("", ftext).setDescription(desc[:2023])
         if imag !='':
             size = getsizes(imag)
