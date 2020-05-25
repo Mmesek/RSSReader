@@ -4,7 +4,8 @@ def filtr(embeds, regex):
     pattern = re.compile(regex)
     e_ = []
     for embed in embeds:
-        if pattern.search(embed['description']) != None or pattern.search(embed['title']) != None:
+        #d = pattern.search(embed['description'])
+        if pattern.search(embed['title']) != None:
             e_ += [embed]
     return e_
 
