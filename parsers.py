@@ -122,3 +122,63 @@ def parseGGDeals(embed, desc, entry, desc_):
     for each in glist:
         desc += f'\n- {each.text}'
     return desc
+
+
+def parseLowcy(embed, desc, entry='', desc_=''):
+    desc = bs(entry['description'], 'html.parser')
+    potrwa = re.findall(r"Oferta potrwa (\d*) dni", desc.text)
+    link = ''
+    dni = re.findall(r"(\d*) dni darmowej gry", desc.text)
+    rabat = re.findall(r"i do ((\d*) (.*))\b zakupić grę z (\d*)% rabatem \(za (.*) zł\)", desc.text)
+    desc = ''
+    desc += ''
+    return desc.text
+#    (r"(?i)(za darmo)? ?(?=PC|Steam|uPlay|Origin|Bethesda|Discord|Epic Games Store|GOG|Humble Store).*? ?(?=za darmo)?")
+#    (r"(?i)za darmo (na|za|w|po) (.*?) (PC|Steam|Uplay|Origin|Bethesda|Discord|Epic Games Store|GOG|Humble Store|Alienware)")
+#    (r"(?i)(darmowy weekend|dni darmowej gry|darmowy tydzień|graj za darmo|bet(y|a))")
+
+def polskigamdev(embed, desc, entry='', desc_=''):
+    if '#ZostanWDomuGrajWPolskieGry'.lower() not in entry['title'].lower():
+        return desc
+    table = {
+        '(': '0',
+        '@': '1',
+        '!': '2',
+        '#': '3',
+        '%': '4',
+        '$': '5',
+        '^': '6',
+        '&': '7',
+        ':': '8',
+        ')': '9',        
+    }
+    data = requests.get(entry['link'])
+    soup = bs(data.text, 'html.parser')
+    ls = soup.blockquote
+    if ls is not None:
+        ls = ls.text
+        for char in table:
+            ls = ls.replace(char, table[char])
+        return ls
+    return desc
+
+def itad(embed, desc, entry, desc_):
+    if True:#'[bundle]' in entry['title'] and ('humble' in entry['title'].lower() or 'fanatical' in entry['title'].lower()):
+        h2t = html2text.HTML2Text()
+        #desc = h2t.handle(re.sub(' : ?(.*?) |','',desc_.prettify()))
+        desc = h2t.handle(desc_.prettify())
+        a = re.findall(r'\[ ?(.*?)\n? ?\] ?\((.*?)\)', desc)
+        f= ''
+        if a is not None:
+            for i in a:
+                if 'see details' in i[0]:
+                    f += '\n' +'['+i[0].title()+']('+i[1]+')'
+                else:
+                    f += '\n- ' + i[0]
+        end = re.findall(r'(?:expires on (.*?) )|(unknown expiry)', desc)
+        for one in end:
+            f+='\nExpires on **'+''.join(one)+'**'
+        #desc = re.sub(': (.*?) |', '',desc)
+        #v = h2t.handle(f.prettify())
+        return f
+    return ''
