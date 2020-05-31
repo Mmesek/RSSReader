@@ -69,9 +69,23 @@ def parsePurePC(embed, desc, entry='', desc_=''):
         soup = bs(bdata.text, 'html.parser')
         if netflix != None:
             try:
-                glist = soup.find('div',class_='main').findAll('h3',class_='cyt')
+                glist = soup.find('div', class_='main').findAll('li')
+                #glist = soup.find('div',class_='main').findAll('h3',class_='cyt')
+                tags = False
                 for each in glist[1:]:
-                    desc+=f'\n- {each.text}'
+                    #desc+=f'\n- {each.text}'
+                    if 'class' in each.attrs:
+                        for one in each.attrs['class']:
+                            if 'taxonomy_term' in one:
+                                tags = True
+                    if tags:
+                        break
+                    h2t = html2text.HTML2Text()
+                    h2tl = h2t.handle(each.prettify())
+                    if len(h2tl) + len(desc) <= 2024:
+                        desc += f'\n- {h2tl}'.replace(' * ', ' ')  #{each.text}'
+                    else:
+                        break
             except Exception as ex:
                 desc = bs(entry['description'],'html.parser').text.split('.',3)
                 desc = desc[0]+f'. {desc[1]}. {desc[2]}.'
