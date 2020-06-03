@@ -42,7 +42,10 @@ class Parser:
                 self.db.update(self.name, self.highest)
                 break
             elif current != self.last and current > self.last:
-                embed = self.parse(entry)
+                try:
+                    embed = self.parse(entry)
+                except:
+                    embed = []
                 if embed != []:
                     self.embeds += [embed]
 
@@ -51,7 +54,7 @@ class Parser:
             return []
         elif 'steam' in entry['link'] and 'details for this event on the' in entry['description']:
             return [] 
-        desc = bs(entry["description"], "html.parser")
+        desc = bs(entry.get("description", entry.get("summary", "")), "html.parser")
         embed = Embed()
         embed.setColor(self.color)
         try:
