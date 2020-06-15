@@ -1,0 +1,6 @@
+feedparser
+html2text
+sqlalchemy
+psycopg2
+aiohttp
+bs4
