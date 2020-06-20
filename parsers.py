@@ -61,7 +61,7 @@ def parseSteam(embed, desc, entry='', desc_=''):
     return h2tl
 
 def parsePurePC(embed, desc, entry='', desc_=''):
-    netflix = re.search(r'(?i)netflix', entry['title'])
+    netflix = re.search(r'(?i)netflix|(hbo go)', entry['title'])
     releases = re.search(r'(?i)Premiery gier', entry['title'])
     if netflix != None or releases != None:
         desc = ''
