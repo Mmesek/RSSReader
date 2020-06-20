@@ -32,7 +32,9 @@ class Spotify(Base):
 
 class Database:
     def __init__(self):
-        self.engine = create_engine("postgresql://postgres:postgres@raspberry:5432/mbot")
+        c = ConfigToDict()["Database"]
+        self.engine = create_engine(f"{c['db']}://{c['user']}:{c['password']}@{c['location']}:{c['port']}/{c['name']}")
+        #self.engine = create_engine("postgresql://postgres:postgres@r4:5432/mframework")
         self.Session = sessionmaker(bind=self.engine)
 
     def update(self, source: str, last: int) -> None:
