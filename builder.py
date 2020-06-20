@@ -78,4 +78,4 @@ class Builder:
 
     def send_webhook(self, url):
         json = {"content": self.content, "embeds": self.embeds, "username": self.username, "avatar_url": self.avatar_url}
-        return self.send_(url, json)
+        return self.send_("https://discordapp.com/api/webhooks/"+url, json)
