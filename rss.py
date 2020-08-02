@@ -40,10 +40,10 @@ class Parser:
         for entry in self.feed['entries']:
             i += 1
             try:
-                if 'youtube' in self.url:
-                    current = int(time.mktime(entry["published_parsed"]))
-                else:
+                if 'youtube' not in self.url:
                     current = int(time.mktime(entry["updated_parsed"]))
+                else:
+                    current = int(time.mktime(entry["published_parsed"]))
             except:
                 current = int(time.mktime(entry["published_parsed"]))
             if current > self.highest:
