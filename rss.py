@@ -1,7 +1,7 @@
 import feedparser, time, re
 from bs4 import BeautifulSoup as bs
 from builder import Embed
-from helpers import getsizes
+from helpers import getsizes, get_main_color
 from parsers import *
 def Invalid(embed, desc):
     return desc
@@ -21,11 +21,18 @@ class Parser:
         self.url = src[2]
         self.last = src[1]
         self.name = src[0]
-        self.color = src[3]
+        self.feed = feedparser.parse(self.url)
+        try:
+            self.avatar = self.feed['feed']['image']['href']
+        except:
+            self.avatar = src[5]
+        try:
+            self.color = get_main_color(self.avatar)
+        except:
+            self.color = src[3]
         self.language = src[4]
         self.highest = self.last
         self.embeds = []
-        self.feed = feedparser.parse(self.url)
         self.db = db
 
     def entries(self):

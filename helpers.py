@@ -50,3 +50,27 @@ def getsizes(uri):
             break
     file.close()
     return(size, None)
+
+
+def getIfromRGB(rgb):
+    red = int(rgb[0].strip())
+    green = int(rgb[1].strip())
+    blue = int(rgb[2].strip())
+    RGBint = (red<<16) + (green<<8) + blue
+    return RGBint
+from PIL import ImageFile
+import urllib
+def get_main_color(img):
+    file = urllib.request.urlopen(urllib.request.Request(img, headers={'User-Agent': 'Mozilla'}))#/JustCheckingImgSize'}))
+    
+    p = ImageFile.Parser()
+
+    while 1:
+        s = file.read(1024)
+        if not s:
+            break
+        p.feed(s)
+
+    im = p.close()
+    r, g, b = im.getpixel((0, 0))
+    return getIfromRGB((r, g, b))
