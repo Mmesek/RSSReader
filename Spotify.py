@@ -88,11 +88,11 @@ class Spotify:
                     artist += ", "
                 artist = artist + f"[{each['name']}]({each['external_urls']['spotify']})"
         uri = chunk["uri"].replace("spotify:album:", "https://open.spotify.com/album/")
-        name = f"[{chunk['name']}]({uri})"  # {artist}"
+        name = f"[{chunk['name']}]"#({uri})"  # {artist}"
         img = chunk["images"][0]["url"]
         typ = chunk["album_type"]
         group = chunk["album_type"]
-        return {"name": name, "img": img, "artist": [(artist)], "type": typ, "group": group}
+        return {"name": name, 'url':f'({uri})', "img": img, "artist": [(artist)], "type": typ, "group": group}
 
     async def makeList(self, market="gb"):
         result = ""
@@ -110,8 +110,9 @@ class Spotify:
         for item in ob:
             if 'thumbnail' not in embed.embed:
                 embed.setThumbnail(ob[0]["img"])
+            if all(item['name'] not in i for i in [result, field1, field2]) and all(item['artist'][0] not in i for i in [result, field1, field2]):
 
-            line = f"- {item['name']} - {item['artist'][0]}\n"
+                line = f"- {item['name']+item['url']} - {item['artist'][0]}\n"
 
             if len(result) + len(line) < 2024:
                 result += line
@@ -156,10 +157,11 @@ async def main():
     build = builder.Builder("", "Spotify", "https://images-eu.ssl-images-amazon.com/images/I/51rttY7a%2B9L.png")
     build.addEmbed(embed)
     if 'description' not in embed:
-        build = builder.Builder("None :(", "Spotify",None,[])
-        build.send_webhook("https://discordapp.com/api/webhooks/514887726131052544/ijz16Q0fNAI7LoNUQJDl3mni1mtiCn6eWZz4fhj43fqg9o5JJl3ED9clEybkUeXlIOKg")
+        return
+        #build = builder.Builder("None :(", "Spotify",None,[])
+        #build.send_webhook("https://discordapp.com/api/webhooks/514887726131052544/ijz16Q0fNAI7LoNUQJDl3mni1mtiCn6eWZz4fhj43fqg9o5JJl3ED9clEybkUeXlIOKg")
     elif '-webhook' in sys.argv:
-        build.send_webhook("https://discordapp.com/api/webhooks/514887726131052544/ijz16Q0fNAI7LoNUQJDl3mni1mtiCn6eWZz4fhj43fqg9o5JJl3ED9clEybkUeXlIOKg")
+        build.send_webhook("514887726131052544/ijz16Q0fNAI7LoNUQJDl3mni1mtiCn6eWZz4fhj43fqg9o5JJl3ED9clEybkUeXlIOKg")
     else:
         webhooks = db.getSpotifyWebhooks()
         for webhook in webhooks:
