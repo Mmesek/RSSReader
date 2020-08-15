@@ -26,10 +26,10 @@ class Parser:
             self.avatar = self.feed['feed']['image']['href']
         except:
             self.avatar = src[5]
-        try:
-            self.color = get_main_color(self.avatar)
-        except:
-            self.color = src[3]
+        #try:
+            #self.color = get_main_color(self.avatar)
+        #except:
+        self.color = src[3]
         self.language = src[4]
         self.highest = self.last
         self.embeds = []
