@@ -92,7 +92,7 @@ class Spotify:
         img = chunk["images"][0]["url"]
         typ = chunk["album_type"]
         group = chunk["album_type"]
-        if one.lstrip().strip(' ').lower() not in artist.lower() and one != 'Various':
+        if one.lstrip().strip(' ').lower() not in artist.lower() and id not in artist and one != 'Various':
             one = f'[{one}](https://open.spotify.com/artist/{id})'
             if artist != '':
                 artist += ', '
