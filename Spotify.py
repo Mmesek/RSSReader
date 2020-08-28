@@ -64,7 +64,7 @@ class Spotify:
         for one in artists:
             data = await self.spotify_call(f"artists/{one[0]}/albums", f"?market={market}&limit=50")
             for i in data["items"]:
-                album = await self.check(i, one[1])
+                album = await self.check(i, one[1], id=one[0])
                 if album is None:
                     continue
                 elif album["name"] in output:
@@ -75,7 +75,7 @@ class Spotify:
         #                    output[album['name']] = album
         return output
 
-    async def check(self, chunk, one="Various"):
+    async def check(self, chunk, one="Various", id=''):
         artist = ""
         if chunk["release_date"][:10] != self.date[:10]:
             return None
@@ -92,6 +92,11 @@ class Spotify:
         img = chunk["images"][0]["url"]
         typ = chunk["album_type"]
         group = chunk["album_type"]
+        if one.lstrip().strip(' ').lower() not in artist.lower() and one != 'Various':
+            one = f'[{one}](https://open.spotify.com/artist/{id})'
+            if artist != '':
+                artist += ', '
+            artist += f'{one}'
         return {"name": name, 'url':f'({uri})', "img": img, "artist": [(artist)], "type": typ, "group": group}
 
     async def makeList(self, market="gb"):
@@ -105,7 +110,7 @@ class Spotify:
         for o in ob:
             ob2 += [json.dumps(o)]
         ob = [json.loads(o) for o in list(set(ob2))]
-        ob = sorted(ob, key=lambda o: o['artist'] or "", reverse=False)
+        ob = sorted(ob, key=lambda o: (o['type'], o['artist'], o['name']) or "", reverse=False)
         embed = builder.Embed().setColor(1947988).setAuthor(f"New Music - {self.date[:10]}", "https://open.spotify.com/browse/discover", "https://images-eu.ssl-images-amazon.com/images/I/51rttY7a%2B9L.png")
         for item in ob:
             if 'thumbnail' not in embed.embed:
@@ -129,7 +134,7 @@ class Spotify:
             field1 = ''
         popular_field = False
         for item in nr:
-            line = f"- {item['name']} - {item['artist'][0]}\n"
+            line = f"- {item['name']+item['url']} - {item['artist'][0]}\n"
             tl = len(field2) + len(line)
             if (tl < 1024) and (cumulative(embed.embed) + tl < 5500):
                 field2 += line
