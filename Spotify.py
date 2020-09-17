@@ -111,6 +111,11 @@ class Spotify:
             ob2 += [json.dumps(o)]
         ob = [json.loads(o) for o in list(set(ob2))]
         ob = sorted(ob, key=lambda o: (o['type'], o['artist'], o['name']) or "", reverse=False)
+        _ob = {}
+        for i in ob:
+            if (i['name'] in _ob and (len(i['artist'][0]) > len(_ob[i['name']]['artist'][0]))) or i['name'] not in _ob:
+                _ob[i['name']] = i
+        ob = [_ob[i] for i in _ob]
         embed = builder.Embed().setColor(1947988).setAuthor(f"New Music - {self.date[:10]}", "https://open.spotify.com/browse/discover", "https://images-eu.ssl-images-amazon.com/images/I/51rttY7a%2B9L.png")
         for item in ob:
             if 'thumbnail' not in embed.embed:
