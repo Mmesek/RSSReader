@@ -61,7 +61,7 @@ def main():
         if filtered != []:
             sendEmbeds(filtered, webhook, content, src[0], avatars[src[0]])
         if embeds != []:
-            sendEmbeds(embeds, webhook)
+            sendEmbeds(embeds, webhook, '', None, None)
 
 
 from helpers import cumulative
