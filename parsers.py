@@ -196,3 +196,32 @@ def itad(embed, desc, entry, desc_):
         #v = h2t.handle(f.prettify())
         return f
     return ''
+
+from textwrap import wrap
+def parseKapitanHack(embed, desc, entry, desc_):
+    if 'zestawienie tygodniowe' in entry['title'].lower():
+        desc = ''
+        bdata = requests.get(entry['link'], headers={'Accept':'text/html', 'User-Agent': 'Mozzila'})
+        soup = bs(bdata.text, 'html.parser')
+        try:
+            glist = soup.find('div', class_='entry-content')
+            headers = glist.findAll('h5')
+            bodies = glist.findAll('p')
+            total_characters = 0
+            field_count = 0
+            for x, each in enumerate(headers[:-1]):
+                body = bodies[x]
+                h2t = html2text.HTML2Text()
+                h2tl = h2t.handle(body.prettify())
+                if (total_characters+len(each.text)+len(body.text)) < 6000 and field_count < 25:
+                    for x, chunk in enumerate(wrap(body.text, 1024, break_on_hyphens=True, break_long_words=True)):
+                        if x == 0:
+                            embed.addField(each.text, chunk, False)
+                        elif total_characters < 6000:
+                            embed.addField('\u200b', chunk, False)
+                        total_characters += len(each.text) + len(chunk)
+                        field_count += 1
+        except Exception as ex:
+            desc = bs(entry['description'],'html.parser').text.split('.',3)
+            desc = desc[0] + f'. {desc[1]}. {desc[2]}.'
+    return desc

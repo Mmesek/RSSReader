@@ -14,6 +14,7 @@ specifics = {
 #    "lowcygier": parseLowcy,
     "polskigamedev": polskigamdev,
     "isthereanydeal": itad,
+    "kapitanhack": parseKapitanHack,
 }
 
 class Parser:
@@ -103,7 +104,7 @@ class Parser:
                     desc = specifics.get(s, Invalid)(embed, desc, entry, desc_)
                 except:
                     desc = desc
-        desc = re.split(rf'(Informacja|Artykuł|The post) {re.escape(entry["title"])}', desc)[0].replace('Czytaj więcej...','')
+        desc = re.split(rf'(Informacja|Artykuł|The post) {re.escape(entry["title"])}', desc)[0].replace('Czytaj więcej...','').replace('Czytaj dalej','')
         '''fields = []
         if len(desc) > 2023:
             des = ''
