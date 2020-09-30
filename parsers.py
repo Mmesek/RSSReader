@@ -225,3 +225,60 @@ def parseKapitanHack(embed, desc, entry, desc_):
             desc = bs(entry['description'],'html.parser').text.split('.',3)
             desc = desc[0] + f'. {desc[1]}. {desc[2]}.'
     return desc
+
+def parseppe(embed, desc, entry, desc_):
+    if 'hbo go' in entry['title'].lower():
+        desc = ''
+        bdata = requests.get(entry['link'], headers={'Accept': 'text/html', 'User-Agent': 'Mozzila'})
+        soup = bs(bdata.text, 'html.parser')
+        daily = False
+        try:
+            glist = soup.find('div', itemprop='articleBody')
+            headers = glist.findAll('h2')
+            for header in headers:
+                if 'dzień po dniu' in header.text:
+                    list_start = header.next_siblings
+            days = {}
+            last = None
+            for i in list_start:
+#                print(i)
+                if i.name == 'p':
+                    days[i.text] = []
+                    last = i.text
+                else:
+                    if last is not None:
+                        if hasattr(i, 'text'):
+                            #print(i)
+                            days[last].append(i.text)
+            releases = ''
+            releases_days = []
+            for day in days:
+                if days[day] != []:
+                    _day = '\n'.join(days[day])
+                    day = day.replace('\xa0',' ')
+                    if len(releases[:1020]) + len(day) + len(_day) < 1016:
+                        releases += '\n' + f"**{day}**" + _day
+                        releases_days.append(day)
+                    else:
+                        if len(releases_days) > 1:
+                            related_days = releases_days[0].split(' ')[0] + '-' + releases_days[-1]
+                        else:
+                            related_days = releases_days[0]
+                        releases_days = []
+                        #print(related_days, releases)
+                        embed.addField(related_days, releases)
+                        releases = ''
+                        if len(releases[:1020]) + len(day) + len(_day) < 1016:
+                            releases += '\n' + f"**{day}**" + _day
+                            releases_days.append(day)
+            if releases != '':
+                if len(releases_days) > 1:
+                    related_days = releases_days[0].split(' ')[0] + '-' + releases_days[-1]
+                else:
+                    related_days = releases_days[0]
+                #print(related_days, releases)
+                embed.addField(related_days, releases)
+        except Exception as ex:
+            desc = bs(entry['description'],'html.parser').text.split('.',3)
+            desc = desc[0] + f'. {desc[1]}. {desc[2]}.'
+    return desc

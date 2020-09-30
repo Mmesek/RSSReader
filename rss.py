@@ -15,6 +15,7 @@ specifics = {
     "polskigamedev": polskigamdev,
     "isthereanydeal": itad,
     "kapitanhack": parseKapitanHack,
+    "ppe": parseppe,
 }
 
 class Parser:
