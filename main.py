@@ -2,7 +2,7 @@
 import helpers, database, builder, rss
 from multiprocessing.dummy import Pool
 pool = Pool(2)
-
+import copy
 
 db = database.Database()
 def fetch(source):
@@ -24,7 +24,7 @@ def main():
         avatars[source[0]] = source[5]
     webhooks = db.getWebhooks()
     for webhook in webhooks:
-        results = results_
+        results = copy.deepcopy(results_)
         embeds = []
         sources = sorted(webhooks[webhook], key=lambda w: w[2] or "", reverse=True)
         srcs = [s[0] for s in sources]
