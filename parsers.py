@@ -97,8 +97,8 @@ def parsePurePC(embed, desc, entry='', desc_=''):
                     row = each.findAll('td')
                     if row[0].text not in dates:
                         dates[row[0].text] = []
-                    if len(row) == 3:
-                        dates[row[0].text] += [f"{row[1].text} - {row[2].text}"]
+                    #if len(row) >= 3:
+                    dates[row[0].text] += [f"{row[1].text} - {row[-1].text}"]
                 for date in dates:
                     desc+=f'\n**{date}**:'
                     for game in dates[date]:
