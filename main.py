@@ -30,6 +30,7 @@ def main():
         srcs = [s[0] for s in sources]
         content = ''
         filtered = []
+        filtered_src = []
         for source in sources:
             e_ = []
             if source[0] == 'all':
@@ -44,7 +45,8 @@ def main():
                 src = source
                 if f_ != []:
                     content += ' ' + src[1]
-                filtered += f_                
+                filtered += f_
+                filtered_src.append(src[1])
                 results[source[0]] = [embed for embed in results[source[0]] if embed not in filtered]
             else:
                 if len(results) <= 5:
@@ -52,14 +54,14 @@ def main():
                     for src in sources:
                         if src[0] in results:
                                 _embeds += results[src[0]]
-                    sendEmbeds(_embeds, webhook)
+                    sendEmbeds(_embeds, webhook, '', None, None)
                     break
                 e_ += results[source[0]]
             if e_ != []:
                 src = source
                 sendEmbeds(e_, webhook, src[1], src[0], avatars[src[0]])
         if filtered != []:
-            sendEmbeds(filtered, webhook, content, src[0], avatars[src[0]])
+            sendEmbeds(filtered, webhook, content, filtered_src[0], avatars[filtered_src[0]])
         if embeds != []:
             sendEmbeds(embeds, webhook, '', None, None)
 
