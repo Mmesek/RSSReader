@@ -68,6 +68,10 @@ class Database:
         session = self.Session()
         artists = session.query(Spotify.SpotifyID, Spotify.Artist).all()
         return artists
+
+    def getTodayWebhooks(self) -> list:
+        session = self.Session()
+        return session.query(Webhooks.Webhook).filter(Webhooks.Source == 'Today').all()
         
 import configparser
 from os.path import dirname
