@@ -5,8 +5,8 @@ from datetime import datetime
 from builder import Builder, Embed
 from database import Database
 import sys
-
-with open("steamstoreindex.json", "r") as file:
+from os.path import dirname
+with open(dirname(__file__)+"/steamstoreindex.json", "r") as file:
     steam_games = json.load(file)
 
 def get_today(today):
@@ -118,7 +118,7 @@ def parse_imdb(soup, today):
 
 def add_quote(today, embed):
     random.seed(today.isoformat()[:10])  # hash(today.year / today.month + today.day))
-    with open("quotes.json", "r", newline="", encoding="utf-8") as file:
+    with open(dirname(__file__)+"/quotes.json", "r", newline="", encoding="utf-8") as file:
         q = json.load(file)
     quote = random.choice(q)
     embed.setFooter("", quote["text"] + "\n- " + quote["author"])
