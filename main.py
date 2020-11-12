@@ -46,7 +46,7 @@ def main():
                 if f_ != []:
                     content += ' ' + src[1]
                 filtered += f_
-                filtered_src.append(src[1])
+                filtered_src.append(src[0])
                 results[source[0]] = [embed for embed in results[source[0]] if embed not in filtered]
             else:
                 if len(results) <= 5:
