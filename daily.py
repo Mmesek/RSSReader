@@ -53,7 +53,7 @@ def request_url(query):
 def parse_daysoftheyear(soup):
     f = ""
     for p in soup.find_all("h3", class_="card__title heading"):
-        if "Week" in p.text or "Month" in p.text:
+        if "week" in p.text.lower() or "month" in p.text.lower():
             continue
         else:
             f += "\n- " + p.text
