@@ -11,7 +11,10 @@ with open(dirname(__file__)+"/steamstoreindex.json", "r") as file:
 
 def get_today(today):
     days = ''
-    days += parse_kalbi_main(request_url("https://www.kalbi.pl"))
+    try:
+        days += parse_kalbi_main(request_url("https://www.kalbi.pl"))
+    except:
+        pass
     if days != '':
         days += "\n"
 
@@ -22,7 +25,10 @@ def get_today(today):
     if day <= 9:
         day = "0" + str(day)
 
-    days += parse_daysoftheyear(request_url(f"https://www.daysoftheyear.com/days/{today.year}/{month}/{day}/"))
+    try:
+        days += parse_daysoftheyear(request_url(f"https://www.daysoftheyear.com/days/{today.year}/{month}/{day}/"))
+    except:
+        pass
     return days
 
 def get_game_releases(today):
