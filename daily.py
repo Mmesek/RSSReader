@@ -56,7 +56,7 @@ def parse_daysoftheyear(soup):
         if "week" in p.text.lower() or "month" in p.text.lower():
             continue
         else:
-            f += "\n- " + p.text
+            f += "\n- " + p.text.strip()
     return f
 
 def parse_kalbi(soup):
@@ -82,6 +82,8 @@ def parse_kalbi_main(soup):
     return _days
 
 def parse_gryonline(soup, today):
+    if not soup:
+        return ""
     soup = soup.find('div',class_='daty-premier-2017')
     games = ''
     for release in soup.find_all('a', class_='box'):
