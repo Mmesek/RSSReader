@@ -125,7 +125,7 @@ class Parser:
         for field in fields:
             embed.addField('\u200b', field[:1023])'''
         embed.setFooter("", ftext).setDescription(desc[:2023])
-        if imag !='':
+        if imag !='' and not imag.endswith("gif"):
             size = getsizes(imag)
             if (size[1][0] == size[1][1] and size[1][0] < 800) or size[1][0] < 400:
                 embed.setThumbnail(imag)
