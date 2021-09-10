@@ -63,7 +63,7 @@ class Spotify:
         artists = db.getObservedArtists()
         for one in artists:
             data = await self.spotify_call(f"artists/{one[0]}/albums", f"?market={market}&limit=50")
-            for i in data["items"]:
+            for i in data.get("items", []):
                 album = await self.check(i, one[1], id=one[0])
                 if album is None:
                     continue
