@@ -89,7 +89,7 @@ def parse_gryonline(soup, today):
     for release in soup.find_all('a', class_='box'):
         lines = release.find_all('div')
         release_date = lines[0].text
-        if str(today.day) not in release_date:
+        if str(today.day) not in release_date.split(' ',1)[0]:
             break
         p = release.find('p', class_='box-sm')
         previous_release = None
