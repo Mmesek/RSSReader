@@ -66,6 +66,8 @@ class Parser:
             return []
         elif 'steam' in entry['link'] and 'details for this event on the' in entry['description']:
             return [] 
+        elif 'ppe.pl' in entry['link'] and not 'news' in entry['link']:
+            return []
         desc = bs(entry.get("description", entry.get("summary", "")), "html.parser")
         embed = Embed()
         embed.setColor(self.color)
