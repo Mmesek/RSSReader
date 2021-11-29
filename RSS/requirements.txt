@@ -1,0 +1,9 @@
+git+ssh://git@github.com:Mmesek/mdiscord.git
+git+ssh://git@github.com:Mmesek/mlib.git
+sqlalchemy
+psycopg2
+feedparser
+dateutil
+lxml
+beautifulsoup4
+html2text
