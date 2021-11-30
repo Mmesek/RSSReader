@@ -146,7 +146,8 @@ class Webhook(Base):
         await client.execute_webhook(
             self.id, self.token, thread_id=thread, 
             content=group.content, 
-            username=group.username, avatar_url=group.avatar_url, embeds=embeds
+            username=group.username, avatar_url=group.avatar_url, embeds=embeds, 
+            allowed_mentions=None
         )#[i for i in embeds if i])
 
     async def send(self, client: RESTClient, formatted_entries: list) -> None:
