@@ -1,6 +1,6 @@
 import time, functools
 
-from typing import Callable, TYPE_CHECKING
+from typing import Callable, TYPE_CHECKING, Dict, List
 from itertools import groupby
 from datetime import datetime#, timezone
 
@@ -15,16 +15,16 @@ if TYPE_CHECKING:
 import re
 RE_IMAGE_URL = re.compile(r"\[?\!\[(.*?)\]\(\S*\)")
 
-processors: dict[str, Callable] = {}
+processors: Dict[str, Callable] = {}
 """Registered Processors for RSS Sources"""
 
-pre_processors: dict[str, Callable] = {}
+pre_processors: Dict[str, Callable] = {}
 """Registered Pre Processors (Cleaning) for RSS Entries"""
 
-post_processors: dict[str, Callable] = {}
+post_processors: Dict[str, Callable] = {}
 """Registered Post Processors (Summarizing, Extracting) for RSS Entries"""
 
-def processor(cls: Callable=None, source: str = None, registry: dict[str, Callable]=processors):
+def processor(cls: Callable=None, source: str = None, registry: Dict[str, Callable]=processors):
     """Adds new processor to source"""
     @functools.wraps(cls)
     def inner(f: Callable):
@@ -138,7 +138,7 @@ class Entry:
 
 class SubscriptionGroup:
     """Embeds grouped for specific Thread"""
-    embeds: list[Embed]
+    embeds: List[Embed]
     """Embeds to send to this thread"""
     content: str
     """Content to include in message"""
@@ -147,7 +147,7 @@ class SubscriptionGroup:
     """Username which should be used when sending this group"""
     avatar_url: str
     """Avatar which should be used when sending this group"""
-    def __init__(self, webhook: 'Webhook', entries: list[Entry]) -> None:
+    def __init__(self, webhook: 'Webhook', entries: List[Entry]) -> None:
         '''Filters embeds according to webhook subscriptions
         alongside other webhook specific data'''
         self.embeds = []
@@ -171,9 +171,9 @@ class SubscriptionGroup:
 
 class Group:
     """Group of threads of embeds to be send to specific webhook"""
-    threads: dict[int, list[SubscriptionGroup]]
+    threads: Dict[int, List[SubscriptionGroup]]
     """Threads with groupped embeds"""
-    def __init__(self, webhook: 'Webhook', entries: list[Entry]) -> None:
+    def __init__(self, webhook: 'Webhook', entries: List[Entry]) -> None:
         self.threads = {}
         from .models import Subscription
         for thread, thread_entries in groupby(sorted(entries, key=lambda x: x.source.name), key=lambda x: next(filter(lambda sub: x.source.name == sub.source, webhook.subscriptions), Subscription()).thread_id):

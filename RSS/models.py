@@ -1,5 +1,6 @@
 import re
 from datetime import datetime, timedelta, timezone
+from typing import List, Set
 
 import feedparser
 from dateutil import parser as dt_parser
@@ -49,7 +50,7 @@ class Feed(FeedMeta, Base):
         self.url: str = url
         self.last_post: datetime = last_post or datetime.now(timezone.utc)
     
-    def get_new(self) -> set[feedparser.FeedParserDict]:
+    def get_new(self) -> Set[feedparser.FeedParserDict]:
         """Get new entries since last fetch"""
         entries = set()
         _last_post = self.last_post
@@ -89,7 +90,7 @@ class Feed(FeedMeta, Base):
         return entries
     
     @classmethod
-    def get(cls, session: sa.orm.Session) -> list['Feed']:
+    def get(cls, session: sa.orm.Session) -> List['Feed']:
         """Retrieves feeds from Database"""
         return (
             session.query(cls)
@@ -136,10 +137,10 @@ class Webhook(Base):
     token: str = sa.Column(sa.String)
     """Token of this Webhook"""
 
-    subscriptions: list[Subscription] = relationship("Subscription", back_populates="webhook", foreign_keys="Subscription.webhook_id")
+    subscriptions: List[Subscription] = relationship("Subscription", back_populates="webhook", foreign_keys="Subscription.webhook_id")
     """Subscriptions for this Webhook"""
 
-    async def _send(self, client: RESTClient, thread: int, group: Group, embeds: list[Embed]):
+    async def _send(self, client: RESTClient, thread: int, group: Group, embeds: List[Embed]):
         """Wrapper around webhook execute"""
         if not group.content and not embeds:
             return
@@ -168,6 +169,6 @@ class Webhook(Base):
                     await self._send(client, thread, group, _embeds)
 
     @classmethod
-    def get(cls, session: sa.orm.Session) -> list['Webhook']:
+    def get(cls, session: sa.orm.Session) -> List['Webhook']:
         """Retrieves webhooks from Database"""
         return session.query(cls).all()

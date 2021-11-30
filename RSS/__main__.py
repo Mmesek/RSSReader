@@ -1,4 +1,5 @@
 import asyncio, time
+from typing import List
 from multiprocessing import dummy
 
 import sqlalchemy as sa
@@ -21,7 +22,7 @@ parser.add_argument("--webhook", help="Webhook id and token (id/token) to which 
 parser.add_argument("--cfg", help="Path to config file", default="config.ini")
 
 
-async def main(session: sa.orm.Session, client: RESTClient = None, feeds: list[Feed] = None, webhooks: list[Webhook] = None) -> None:
+async def main(session: sa.orm.Session, client: RESTClient = None, feeds: List[Feed] = None, webhooks: List[Webhook] = None) -> None:
     """
     Main RSS logic function.
     - Fetches feeds from database
