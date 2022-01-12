@@ -65,7 +65,7 @@ class Feed(FeedMeta, Base):
 
         _feed = feedparser.parse(self.url, modified=self.last_post)
 
-        if _feed.status == 304:
+        if _feed.get('status') == 304:
             return entries
 
         for entry in _feed.entries:
