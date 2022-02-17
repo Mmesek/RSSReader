@@ -78,7 +78,7 @@ if __name__ == '__main__':
         cfg = ConfigToDict(args.cfg)
         db = SQL(**cfg['Database'])
     else:
-        db = SQL(db="postgresql", location="192.168.1.5", name="RSS", echo=False)
+        db = SQL(db="sqlite", name="RSS", echo=False)
 
     db.create_tables()
     session = db.session()
