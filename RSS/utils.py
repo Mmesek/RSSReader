@@ -3,6 +3,8 @@ import time, functools
 from typing import Callable, TYPE_CHECKING, Dict, List
 from itertools import groupby
 from datetime import datetime#, timezone
+from urllib.request import urlopen
+from PIL import Image
 
 import feedparser
 from bs4 import BeautifulSoup as bs
@@ -112,6 +114,10 @@ class Entry:
         author_avatar = None
         if author_avatar:
             author_avatar = author_avatar.href
+        if image and not (thumbnail or author_avatar):
+            img = Image.open(urlopen(image))
+            if img.size[0] == img.size[1]:
+                thumbnail, image = image, None
         #TODO: Improve image detection
 
         self.embed = (
