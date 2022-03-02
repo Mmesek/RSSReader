@@ -45,6 +45,8 @@ class Feed(FeedMeta, Base):
     refresh_rate: timedelta = sa.Column(sa.Interval, default=timedelta())
     '''Rate at which RSS should be fetched'''
 
+    components: List['Feed_Component'] = relationship("Feed_Component", back_populates="feed", foreign_keys="Feed_Component.source")
+
     def __init__(self, name: str, url: str, last_post: datetime = None) -> None:
         self.name: str = name
         self.url: str = url
@@ -83,7 +85,7 @@ class Feed(FeedMeta, Base):
             elif ts <= self.last_post:
                 continue
 
-            entry._feed = FeedMeta(self.name, self.color, self.icon_url, self.language, self.fetch_content)
+            entry._feed = self#FeedMeta(self.name, self.color, self.icon_url, self.language, self.fetch_content)
             entries.add(entry)
         self.last_post = _last_post
 
@@ -99,6 +101,12 @@ class Feed(FeedMeta, Base):
             )
             .all()
         )
+
+class Feed_Component(Base):
+    name: str = sa.Column(sa.String, primary_key=True)
+    source: str = sa.Column(sa.ForeignKey("Feed.name"), primary_key=True)
+    feed: Feed = relationship("Feed")
+    value: str = sa.Column(sa.String)
 
 
 class Subscription(Base):

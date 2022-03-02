@@ -11,7 +11,7 @@ from mlib.config import ConfigToDict
 from mlib.logger import log
 
 from .models import Feed, Webhook
-from .utils import Entry, pre_processors as filters
+from .utils import Entry, processors as components
 from . import processors # noqa: F401
 
 import argparse
@@ -61,7 +61,11 @@ async def main(session: sa.orm.Session, client: RESTClient = None, feeds: List[F
     _p = time.time()
     log.info("Entries (%s) created & parsed in %s", len(entries), _p - _f)
 
-    entries = set(filter(lambda entry: filters.get(entry.source.name.split(":")[0], lambda x: True)(entry), entries))
+    for entry in entries.copy():
+        for component in entry.source.components:
+            if not components.get(component.name, lambda x, y: (True))(entry, component.value):
+                entries.remove(entry)
+                break
 
     _filtered = time.time()
     log.info("Entries (%s) filtered in %s", len(entries), _filtered - _p)
