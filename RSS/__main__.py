@@ -1,6 +1,7 @@
 import asyncio, time
 from typing import List
 from multiprocessing import dummy
+from os import getenv
 
 import sqlalchemy as sa
 
@@ -20,7 +21,7 @@ parser.add_argument("--database", help="Path to database", default="localhost")
 parser.add_argument("--name", help="Name of database", default="RSS")
 parser.add_argument("feeds", nargs="*", help="List of feeds to fetch")
 parser.add_argument("--webhook", help="Webhook id and token (id/token) to which feeds should be sent to")
-parser.add_argument("--cfg", help="Path to config file", default="config.ini")
+parser.add_argument("--cfg", help="Path to config file", default=None)
 
 
 async def main(session: sa.orm.Session, client: RESTClient = None, feeds: List[Feed] = None, webhooks: List[Webhook] = None) -> None:
@@ -88,7 +89,7 @@ if __name__ == '__main__':
         cfg = ConfigToDict(args.cfg)
         db = SQL(**cfg['Database'])
     else:
-        db = SQL(db="sqlite", name="RSS", echo=False)
+        db = SQL(url=getenv("DATABASE_URL"), echo=False)
 
     db.create_tables()
     session = db.session()
