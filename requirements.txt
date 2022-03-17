@@ -8,3 +8,4 @@ aiohttp
 bs4
 python-dateutil
 pillow
+lxml
