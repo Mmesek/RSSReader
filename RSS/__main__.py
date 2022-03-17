@@ -89,7 +89,7 @@ if __name__ == '__main__':
         cfg = ConfigToDict(args.cfg)
         db = SQL(**cfg['Database'])
     else:
-        db = SQL(url=getenv("DATABASE_URL"), echo=False)
+        db = SQL(url=getenv("DATABASE_URL").replace("postgres://", "postgresql://"), echo=False)
 
     db.create_tables()
     session = db.session()
