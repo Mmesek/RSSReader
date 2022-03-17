@@ -1,6 +1,10 @@
+git+https://github.com/Mmesek/mdiscord.git
+git+https://github.com/Mmesek/mlib.git
 feedparser
 html2text
 sqlalchemy
 psycopg2
 aiohttp
 bs4
+python-dateutil
+pillow
