@@ -2,7 +2,7 @@ import time, functools
 
 from typing import Callable, TYPE_CHECKING, Dict, List
 from itertools import groupby
-from datetime import datetime#, timezone
+from datetime import datetime  # , timezone
 from urllib.request import urlopen
 from PIL import Image
 
@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from .models import Feed, Webhook
 
 import re
+
 RE_IMAGE_URL = re.compile(r"\[?\!\[(.*?)\]\(\S*\)")
 
 processors: Dict[str, Callable] = {}
@@ -26,19 +27,24 @@ pre_processors: Dict[str, Callable] = {}
 post_processors: Dict[str, Callable] = {}
 """Registered Post Processors (Summarizing, Extracting) for RSS Entries"""
 
-def processor(cls: Callable=None, source: str = None, registry: Dict[str, Callable]=processors):
+
+def processor(cls: Callable = None, source: str = None, registry: Dict[str, Callable] = processors):
     """Adds new processor to source"""
+
     @functools.wraps(cls)
     def inner(f: Callable):
         # TODO: Consider turning it into a list like onDispatch and iterate over instead of calling single one
         registry[source or f.__name__] = f
         return f
+
     if cls:
         return inner(cls)
     return inner
 
+
 def toMarkdown(html: str) -> str:
     import html2text
+
     h2tl = html2text.HTML2Text(bodywidth=0)
     h2tl.protect_links = True
     h2tl.single_line_break = True
@@ -47,16 +53,18 @@ def toMarkdown(html: str) -> str:
 
 class Entry:
     """Processed Feed Entry formatted into Embed"""
+
     embed: Embed
     """Embed made from this Entry"""
-    source: 'Feed'
+    source: "Feed"
     """Source Feed from which this Entry comes from"""
+
     def __init__(self, entry: feedparser.FeedParserDict) -> None:
         self._entry = entry
         self.source = entry._feed
         self.make_embed()
         self.format(entry.get("description", entry.get("summary", "")))
-    
+
     def get_processor(self) -> Callable:
         """Returns function responsible for processing text"""
         return processors.get(self.source.name, self.summarize)
@@ -64,7 +72,7 @@ class Entry:
     def format(self, description: str):
         """Formats description according to processor"""
         processor = self.get_processor()
-        text = processor(description, self._entry.get('link'))
+        text = processor(description, self._entry.get("link"))
         additional_fields: list[Embed_Field] = []
         if text and type(text) is not str:
             additional_fields, text = text
@@ -84,27 +92,28 @@ class Entry:
         """Summarizes post"""
         if self.source.fetch_content:
             # TODO: Fetch and parse content
-            #description = newspaper_summary(self, url)
+            # description = newspaper_summary(self, url)
             pass
         soup = bs(description, "lxml")
         img = soup.find("img")
-        if not self.embed.image.url and img and not img.get("src","").endswith("gif"):
+        if not self.embed.image.url and img and not img.get("src", "").endswith("gif"):
             self.embed.image.url = img.get("src", "")
         description = toMarkdown(description).strip()
         import re
+
         image = RE_IMAGE_URL.search(description)
         description = RE_IMAGE_URL.sub(image.group(1) if image else "", description)
-        description = re.split(rf'(Informacja|Artykuł|The post) \[?{re.escape(self.embed.title)}', description)[0]
-        description = description.replace('Czytaj więcej...','').replace('Czytaj dalej','')
+        description = re.split(rf"(Informacja|Artykuł|The post) \[?{re.escape(self.embed.title)}", description)[0]
+        description = description.replace("Czytaj więcej...", "").replace("Czytaj dalej", "")
 
         return description.strip()
 
     def make_embed(self):
         """Creates embed from entry"""
         _ = self._entry
-        images = filter(lambda x: 'image' in x.type, _.get('links', []))
+        images = filter(lambda x: "image" in x.type, _.get("links", []))
 
-        #FIXME
+        # FIXME
         image = next(images, None)
         if image:
             image = image.href
@@ -118,32 +127,32 @@ class Entry:
             img = Image.open(urlopen(image))
             if img.size[0] == img.size[1]:
                 thumbnail, image = image, None
-        #TODO: Improve image detection
+        # TODO: Improve image detection
 
         self.embed = (
             Embed()
-            .setUrl(_.get('link'))
+            .setUrl(_.get("link"))
             .setTimestamp(
                 datetime.fromtimestamp(
-                    time.mktime(
-                        _.get('updated_parsed') or _.get('published_parsed')
-                    ),
-            )#tz=timezone.utc)
+                    time.mktime(_.get("updated_parsed") or _.get("published_parsed")),
+                )  # tz=timezone.utc)
             )
-            .setTitle(_.get('title'))
+            .setTitle(_.get("title"))
             .setImage(image)
             .setThumbnail(thumbnail)
             .setFooter(
-                " ".join(
-                    [_.get('author'), "@", (self.source.name or "SOURCE")]
-                ) if _.get("author") else self.source.name, 
-                author_avatar)
+                " ".join([_.get("author"), "@", (self.source.name or "SOURCE")])
+                if _.get("author")
+                else self.source.name,
+                author_avatar,
+            )
             .setColor(self.source.color)
         )
 
 
 class SubscriptionGroup:
     """Embeds grouped for specific Thread"""
+
     embeds: List[Embed]
     """Embeds to send to this thread"""
     content: str
@@ -153,9 +162,10 @@ class SubscriptionGroup:
     """Username which should be used when sending this group"""
     avatar_url: str
     """Avatar which should be used when sending this group"""
-    def __init__(self, webhook: 'Webhook', entries: List[Entry]) -> None:
-        '''Filters embeds according to webhook subscriptions
-        alongside other webhook specific data'''
+
+    def __init__(self, webhook: "Webhook", entries: List[Entry]) -> None:
+        """Filters embeds according to webhook subscriptions
+        alongside other webhook specific data"""
         self.embeds = []
         self.content = ""
         self.username = None
@@ -166,24 +176,32 @@ class SubscriptionGroup:
             if sub.regex and not sub.search(entry.embed.description):
                 continue
             if (sub.content or "") not in self.content:
-                self.content += " "+sub.content
+                self.content += " " + sub.content
             if not self.username:
                 self.username = sub.feed.name
             if not self.avatar_url:
                 self.avatar_url = sub.feed.icon_url
             self.embeds.append(entry.embed)
-        self.embeds.sort(key= lambda x: x.timestamp)
+        self.embeds.sort(key=lambda x: x.timestamp)
 
 
 class Group:
     """Group of threads of embeds to be send to specific webhook"""
+
     threads: Dict[int, List[SubscriptionGroup]]
     """Threads with groupped embeds"""
-    def __init__(self, webhook: 'Webhook', entries: List[Entry]) -> None:
+
+    def __init__(self, webhook: "Webhook", entries: List[Entry]) -> None:
         self.threads = {}
         from .models import Subscription
-        for thread, thread_entries in groupby(sorted(entries, key=lambda x: x.source.name), key=lambda x: next(filter(lambda sub: x.source.name == sub.source, webhook.subscriptions), Subscription()).thread_id):
+
+        for thread, thread_entries in groupby(
+            sorted(entries, key=lambda x: x.source.name),
+            key=lambda x: next(
+                filter(lambda sub: x.source.name == sub.source, webhook.subscriptions), Subscription()
+            ).thread_id,
+        ):
             sources = []
             for source, source_entries in groupby(thread_entries, key=lambda x: x.source.name):
                 sources.append(SubscriptionGroup(webhook, list(source_entries)))
-            self.threads[thread] = sources#SubscriptionGroup(webhook, list(thread_entries))
+            self.threads[thread] = sources  # SubscriptionGroup(webhook, list(thread_entries))
