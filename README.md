@@ -2,7 +2,7 @@
 
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-[![CodeFactor Grade](https://img.shields.io/codefactor/grade/github/Mmesek/RSSReader)]()
+[![CodeFactor Grade](https://img.shields.io/codefactor/grade/github/Mmesek/RSSReader)](https://www.codefactor.io/repository/github/mmesek/rssreader/overview/main)
 [![Lines of code](https://img.shields.io/tokei/lines/github/Mmesek/RSSReader)]()
 [![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/Mmesek/RSSReader)]()
 [![GitHub repo size](https://img.shields.io/github/repo-size/Mmesek/RSSReader)]()
