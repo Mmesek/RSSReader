@@ -61,13 +61,13 @@ class Feed(FeedMeta, Base):
     def get_new(self) -> Set[feedparser.FeedParserDict]:
         """Get new entries since last fetch"""
         entries = set()
-        _last_post = self.last_post
 
         if not self.last_post.tzinfo:
             # HACK for sqlite
             import pytz
 
             self.last_post = pytz.timezone("utc").localize(self.last_post)
+        _last_post = self.last_post
 
         if self.refresh_rate and self.refresh_rate > datetime.now(tz=timezone.utc) - self.last_post:
             return entries
