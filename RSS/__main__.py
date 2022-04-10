@@ -9,10 +9,8 @@ from mdiscord.http_client import HTTP_Client as RESTClient
 
 from mlib.database import SQL
 from mlib.config import ConfigToDict
-from mlib.logger import log
-
 from .models import Feed, Webhook
-from .utils import Entry, processors as components
+from .utils import Entry, processors as components, log
 from . import processors  # noqa: F401
 
 import argparse
@@ -23,6 +21,8 @@ parser.add_argument("--name", help="Name of database", default="RSS")
 parser.add_argument("feeds", nargs="*", help="List of feeds to fetch")
 parser.add_argument("--webhook", help="Webhook id and token (id/token) to which feeds should be sent to")
 parser.add_argument("--cfg", help="Path to config file", default=None)
+parser.add_argument("--log", default="WARNING", help="Specifies logging level", choices=["DEBUG", "INFO", "WARNING"])
+log.setLevel(parser.parse_args().log)
 
 
 async def main(
@@ -56,7 +56,7 @@ async def main(
         r = pool.map(lambda x: x.get_new(), feeds)
         session.commit()
         _f = time.time()
-        log.info("Fetched new (%s) from feeds (%s) in %s", len([i for i in r if i]), len(r), _f - _s)
+        log.info("Fetched new entries (%s) from feeds (%s) in %s", len([i for i in r if i]), len(r), _f - _s)
 
         _ = []
         list(map(_.extend, r))
@@ -93,7 +93,12 @@ if __name__ == "__main__":
         cfg = ConfigToDict(args.cfg)
         db = SQL(**cfg["Database"])
     else:
-        db = SQL(url=getenv("DATABASE_URL").replace("postgres://", "postgresql://"), echo=False)
+        try:
+            url = getenv("DATABASE_URL").replace("postgres://", "postgresql://")
+        except AttributeError:
+            log.critical("Connection string is not supplied!")
+            url = None
+        db = SQL(url=url, echo=False)
 
     db.create_tables()
     session = db.session()

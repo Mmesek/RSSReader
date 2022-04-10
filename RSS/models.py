@@ -12,7 +12,7 @@ from mlib.database import Base
 
 from mdiscord.http_client import HTTP_Client as RESTClient
 
-from .utils import Group
+from .utils import Group, log
 
 
 class FeedMeta:
@@ -67,14 +67,22 @@ class Feed(FeedMeta, Base):
             import pytz
 
             self.last_post = pytz.timezone("utc").localize(self.last_post)
+
         _last_post = self.last_post
 
         if self.refresh_rate and self.refresh_rate > datetime.now(tz=timezone.utc) - self.last_post:
+            log.debug(
+                "Skipping %s as refresh rate (%s) interval didn't elapse since last post (%s) yet",
+                self.name,
+                self.refresh_rate,
+                self.last_post,
+            )
             return entries
 
         _feed = feedparser.parse(self.url, modified=self.last_post)
 
         if _feed.get("status") == 304:
+            log.debug("No new entries (Status code 304) on feed %s", self.name)
             return entries
 
         for entry in _feed.entries:
@@ -82,7 +90,9 @@ class Feed(FeedMeta, Base):
                 _ts = entry.updated
             except:
                 _ts = entry.published
+
             ts = dt_parser.parse(_ts, tzinfos={"EET": 7200})
+
             if not ts.tzinfo:
                 import pytz
 
@@ -91,18 +101,27 @@ class Feed(FeedMeta, Base):
             if ts > _last_post:
                 _last_post = ts
             elif ts <= self.last_post:
+                log.debug(
+                    "Skipping entry (%s) due to timestamp (%s) being before last post (%s)",
+                    entry.get("title", ""),
+                    ts,
+                    self.last_post,
+                )
                 continue
 
             entry._feed = self  # FeedMeta(self.name, self.color, self.icon_url, self.language, self.fetch_content)
             entries.add(entry)
-        self.last_post = _last_post
 
+        self.last_post = _last_post
+        log.debug("Got %s new entries from feed %s", len(entries), self.name)
         return entries
 
     @classmethod
     def get(cls, session: sa.orm.Session) -> List["Feed"]:
         """Retrieves feeds from Database"""
-        return session.query(cls).filter(sa.func.now() - cls.last_post > cls.refresh_rate).all()  # Possibly FIXME?
+        f = session.query(cls).filter(sa.func.now() - cls.last_post > cls.refresh_rate).all()  # Possibly FIXME?
+        log.debug("Got (%s) feed sources from database", len(f))
+        return f
 
 
 class Feed_Component(Base):
@@ -138,7 +157,10 @@ class Subscription(Base):
     def search(self, string: str) -> re.Match:
         """Compiles regex if not compiled already and searches provided string for a match"""
         if not self._compiled_regex:
+            log.debug("Compiling regex %s", self.regex)
             self._compiled_regex = re.compile(self.regex)
+
+        log.debug("Searching for Match by Regex %s", self.regex)
         return self._compiled_regex.search(string)
 
 
@@ -159,6 +181,7 @@ class Webhook(Base):
         """Wrapper around webhook execute"""
         if not group.content and not embeds:
             return
+        log.debug("Sending group (%s) of entries to webhook %s within thread %s", group.username, self.id, thread)
         await client.execute_webhook(
             self.id,
             self.token,
@@ -172,6 +195,7 @@ class Webhook(Base):
 
     async def send(self, client: RESTClient, formatted_entries: list) -> None:
         """Sends Embeds in groups by source (up to 10 at once) below total embed's character limit using this webhook"""
+        log.debug("Sending entries (%s) to webhook %s", len(formatted_entries), self.id)
         _group = Group(self, formatted_entries)
         for thread, groups in _group.threads.items():
             for group in groups:
@@ -193,4 +217,6 @@ class Webhook(Base):
     @classmethod
     def get(cls, session: sa.orm.Session) -> List["Webhook"]:
         """Retrieves webhooks from Database"""
-        return session.query(cls).all()
+        w = session.query(cls).all()
+        log.debug("Got (%s) webhooks from database", len(w))
+        return w

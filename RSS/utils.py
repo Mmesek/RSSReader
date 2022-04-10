@@ -11,6 +11,9 @@ from bs4 import BeautifulSoup as bs
 
 from mdiscord import Embed, Embed_Field, Limits
 
+import logging
+log = logging.getLogger("RSS")
+
 if TYPE_CHECKING:
     from .models import Feed, Webhook
 
