@@ -41,9 +41,9 @@ class FeedMeta:
 class Feed(FeedMeta, Base):
     """RSS/Atom Feed Metadata"""
 
-    url: str = sa.Column(sa.String)
+    url: str = sa.Column(sa.String, nullable=False)
     """URL to fetch"""
-    last_post: datetime = sa.Column(sa.DateTime(True))
+    last_post: datetime = sa.Column(sa.DateTime(True), nullable=False)
     """Last fetched post from this feed"""
 
     refresh_rate: timedelta = sa.Column(sa.Interval, default=timedelta())
@@ -169,7 +169,7 @@ class Webhook(Base):
 
     id: int = sa.Column(sa.BigInteger, primary_key=True)
     """ID of this Webhook"""
-    token: str = sa.Column(sa.String)
+    token: str = sa.Column(sa.String, nullable=False)
     """Token of this Webhook"""
 
     subscriptions: List[Subscription] = relationship(
