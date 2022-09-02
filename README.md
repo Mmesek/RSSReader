@@ -16,7 +16,7 @@
 
 RSS feed parser sending entries as embeds via webhooks to Discord Channels
 
-# Installation
+## Installation
 
 ```sh
 git clone https://github.com/Mmesek/RSSReader.git
@@ -24,7 +24,7 @@ cd RSSReader
 python -m pip install -r requirements.txt
 ```
 
-# Configuration
+## Configuration
 
 Feeds & Webhooks are stored in database
 
@@ -53,7 +53,23 @@ port = 5432
 name = public
 ```
 
-# Running
+## Database Tables
+### Feed
+There are stored tracked feeds:
+ - `URL` to feed.
+ - `last_post` being a timestamp of last entry in this feed.
+ - `refresh_rate` when set, it won't attempt to fetch this feed again unless it's changed. Set to 0:00:00 to disable.
+
+### Feed_Component
+Processing of feeds for each entry can be customized there. Available components can be found in `processors.py`
+
+### Subscription
+This is many-to-many relationship between `Feed` and `Webhook` tables.
+
+### Webhook
+Webhook's `ID` and `Token` are stored here
+
+## Running
 
 Whole package is a run-once script, therefore if you want to run it more often, you'll need to setup cronjob to start it manually
 
@@ -72,7 +88,7 @@ Alternatively if you deploy to Heroku, you can trigger it by restarting (deletin
 curl -n -X DELETE https://api.heroku.com/apps/{APP_NAME}/dynos -H "Content-Type: application/json" -H "Accept: application/vnd.heroku+json; version=3" -H "Authorization: Bearer {TOKEN}"
 ```
 
-# Caveats
+## Caveats
 
 Code has been tested in production against PostgreSQL. Free tier on either Heroku or Supabase should be well more than enough for simple use case. 
 
