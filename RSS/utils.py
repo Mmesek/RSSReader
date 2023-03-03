@@ -1,43 +1,37 @@
-import time, functools
+import argparse, functools, os, logging
+from typing import Callable
 
-from typing import Callable, TYPE_CHECKING, Dict, List
-from itertools import groupby
-from datetime import datetime  # , timezone
-from urllib.request import urlopen
-from PIL import Image
+import pytz
+from aiohttp import ClientSession
+from datetime import datetime
+from dateutil import parser as dt_parser
 
-import feedparser
-from bs4 import BeautifulSoup as bs
+from mlib.database import AsyncSQL
+from mlib.config import ConfigToDict
 
-from mdiscord import Embed, Embed_Field, Limits
-
-import logging
 log = logging.getLogger("RSS")
 
-if TYPE_CHECKING:
-    from .models import Feed, Webhook
-
-import re
-
-RE_IMAGE_URL = re.compile(r"\[?\!\[(.*?)\]\(\S*\)")
-
-processors: Dict[str, Callable] = {}
+PROCESSORS: dict[str, list[Callable]] = {}
 """Registered Processors for RSS Sources"""
 
-pre_processors: Dict[str, Callable] = {}
+PRE_PROCESSORS: dict[str, list[Callable]] = {}
 """Registered Pre Processors (Cleaning) for RSS Entries"""
 
-post_processors: Dict[str, Callable] = {}
+POST_PROCESSORS: dict[str, list[Callable]] = {}
 """Registered Post Processors (Summarizing, Extracting) for RSS Entries"""
 
 
-def processor(cls: Callable = None, source: str = None, registry: Dict[str, Callable] = processors):
+def processor(cls: Callable = None, source: str = None, registry: dict[str, list[Callable]] = PROCESSORS):
     """Adds new processor to source"""
 
     @functools.wraps(cls)
     def inner(f: Callable):
-        # TODO: Consider turning it into a list like onDispatch and iterate over instead of calling single one
-        registry[source or f.__name__] = f
+        _name = source or f.__name__
+
+        if _name not in registry:
+            registry[_name] = []
+
+        registry[_name].append(f)
         return f
 
     if cls:
@@ -45,166 +39,60 @@ def processor(cls: Callable = None, source: str = None, registry: Dict[str, Call
     return inner
 
 
-def toMarkdown(html: str) -> str:
-    import html2text
+def timed(func=None, msg: str = ""):
+    """Logs execution time. First argument is length of result, then second is length of input argument. Delta is passed as last"""
 
-    h2tl = html2text.HTML2Text(bodywidth=0)
-    h2tl.protect_links = True
-    h2tl.single_line_break = True
-    return h2tl.handle(html).replace("\n\n", "\n")
+    def inner(*args, **kwargs):
+        import time
 
+        start = time.perf_counter_ns()
+        result = func(*args, **kwargs)
+        finish = time.perf_counter_ns()
 
-class Entry:
-    """Processed Feed Entry formatted into Embed"""
+        log.info(msg, len(result), len(args[0]), finish - start)
+        return result
 
-    embed: Embed
-    """Embed made from this Entry"""
-    source: "Feed"
-    """Source Feed from which this Entry comes from"""
-
-    def __init__(self, entry: feedparser.FeedParserDict) -> None:
-        self._entry = entry
-        self.source = entry._feed
-        self.make_embed()
-        self.format(entry.get("description", entry.get("summary", "")))
-
-    def get_processor(self) -> Callable:
-        """Returns function responsible for processing text"""
-        return processors.get(self.source.name, self.summarize)
-
-    def format(self, description: str):
-        """Formats description according to processor"""
-        processor = self.get_processor()
-        text = processor(description, self._entry.get("link"))
-        additional_fields: list[Embed_Field] = []
-        if text and type(text) is not str:
-            additional_fields, text = text
-
-        if len(text) <= Limits.DESCRIPTION:
-            self.embed.setDescription(text)
-        else:
-            self.embed.addFields("\u200b", text)
-        for field in additional_fields:
-            self.embed.addField(field.name, field.value, field.inline)
-
-    def preprocess(self):
-        """Preprocess summary text. Shouldn't be needed once summarizes becomes default"""
-        pass
-
-    def summarize(self, description: str, url: str) -> str:
-        """Summarizes post"""
-        if self.source.fetch_content:
-            # TODO: Fetch and parse content
-            # description = newspaper_summary(self, url)
-            pass
-        soup = bs(description, "lxml")
-        img = soup.find("img")
-        if not self.embed.image.url and img and not img.get("src", "").endswith("gif"):
-            self.embed.image.url = img.get("src", "")
-        description = toMarkdown(description).strip()
-        import re
-
-        image = RE_IMAGE_URL.search(description)
-        description = RE_IMAGE_URL.sub(image.group(1) if image else "", description)
-        description = re.split(rf"(Informacja|Artykuł|The post) \[?{re.escape(self.embed.title)}", description)[0]
-        description = description.replace("Czytaj więcej...", "").replace("Czytaj dalej", "")
-
-        return description.strip()
-
-    def make_embed(self):
-        """Creates embed from entry"""
-        _ = self._entry
-        images = filter(lambda x: "image" in x.type, _.get("links", []))
-
-        # FIXME
-        image = next(images, None)
-        if image:
-            image = image.href
-        thumbnail = next(images, None)
-        if thumbnail:
-            thumbnail = thumbnail.href
-        author_avatar = None
-        if author_avatar:
-            author_avatar = author_avatar.href
-        if image and not (thumbnail or author_avatar):
-            img = Image.open(urlopen(image))
-            if img.size[0] == img.size[1]:
-                thumbnail, image = image, None
-        # TODO: Improve image detection
-
-        self.embed = (
-            Embed()
-            .setUrl(_.get("link"))
-            .setTimestamp(
-                datetime.fromtimestamp(
-                    time.mktime(_.get("updated_parsed") or _.get("published_parsed")),
-                )  # tz=timezone.utc)
-            )
-            .setTitle(_.get("title"))
-            .setImage(image)
-            .setThumbnail(thumbnail)
-            .setFooter(
-                " ".join([_.get("author"), "@", (self.source.name or "SOURCE")])
-                if _.get("author")
-                else self.source.name,
-                author_avatar,
-            )
-            .setColor(self.source.color)
-        )
+    return inner
 
 
-class SubscriptionGroup:
-    """Embeds grouped for specific Thread"""
-
-    embeds: List[Embed]
-    """Embeds to send to this thread"""
-    content: str
-    """Content to include in message"""
-
-    username: str
-    """Username which should be used when sending this group"""
-    avatar_url: str
-    """Avatar which should be used when sending this group"""
-
-    def __init__(self, webhook: "Webhook", entries: List[Entry]) -> None:
-        """Filters embeds according to webhook subscriptions
-        alongside other webhook specific data"""
-        self.embeds = []
-        self.content = ""
-        self.username = None
-        self.avatar_url = None
-
-        for entry in filter(lambda x: any(x.source.name == sub.source for sub in webhook.subscriptions), entries):
-            sub = next(filter(lambda x: x.source == entry.source.name, webhook.subscriptions), None)
-            if sub.regex and not sub.search(entry.embed.description):
-                continue
-            if (sub.content or "") not in self.content:
-                self.content += " " + sub.content
-            if not self.username:
-                self.username = sub.feed.name
-            if not self.avatar_url:
-                self.avatar_url = sub.feed.icon_url
-            self.embeds.append(entry.embed)
-        self.embeds.sort(key=lambda x: x.timestamp)
+async def setup(*args):
+    db = AsyncSQL(url="postgresql+psycopg://postgres:postgres@r4/sa2")
+    await db.create_tables()
+    return db
 
 
-class Group:
-    """Group of threads of embeds to be send to specific webhook"""
+async def _setup(parser: argparse.ArgumentParser) -> AsyncSQL:
+    args = parser.parse_args()
 
-    threads: Dict[int, List[SubscriptionGroup]]
-    """Threads with groupped embeds"""
+    log.setLevel(args.log)
 
-    def __init__(self, webhook: "Webhook", entries: List[Entry]) -> None:
-        self.threads = {}
-        from .models import Subscription
+    if args.cfg:
+        cfg = ConfigToDict(args.cfg)
+        db = AsyncSQL(**cfg["Database"])
+    else:
+        try:
+            url = os.getenv("DATABASE_URL")
+        except AttributeError:
+            log.critical("Connection string is not supplied!")
+            url = None
+        db = AsyncSQL(url=url, echo=False)
 
-        for thread, thread_entries in groupby(
-            sorted(entries, key=lambda x: x.source.name),
-            key=lambda x: next(
-                filter(lambda sub: x.source.name == sub.source, webhook.subscriptions), Subscription()
-            ).thread_id,
-        ):
-            sources = []
-            for source, source_entries in groupby(thread_entries, key=lambda x: x.source.name):
-                sources.append(SubscriptionGroup(webhook, list(source_entries)))
-            self.threads[thread] = sources  # SubscriptionGroup(webhook, list(thread_entries))
+    await db.create_tables()
+    return db
+
+
+def parse_ts(timestamp: str) -> datetime:
+    ts = dt_parser.parse(timestamp, tzinfos={"EET": 7200})
+    if not ts.tzinfo:
+        ts = pytz.timezone("utc").localize(ts)
+    return ts
+
+
+async def get(client: ClientSession, url: str, modified: str) -> tuple[str | None, int]:
+    async with client.get(url, headers={"If-Modified-Since": modified}) as res:
+        return await res.text() or None, res.status
+
+
+async def send(client: ClientSession, url: str, json: dict) -> bool:
+    async with client.post(url, json=json) as res:
+        return await res.status == 200
