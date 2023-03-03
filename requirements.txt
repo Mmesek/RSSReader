@@ -1,12 +1,9 @@
 git+https://github.com/Mmesek/mdiscord.git
-git+https://github.com/Mmesek/mlib.git
+git+https://github.com/Mmesek/mlib.git@sqlalchemy2
 feedparser
 html2text
 sqlalchemy
-psycopg2
+psycopg[binary]
 aiohttp
-bs4
 python-dateutil
-pillow
-lxml
 pytz
