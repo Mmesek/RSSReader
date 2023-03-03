@@ -35,7 +35,7 @@ async def main(session: AsyncSession, feeds: list[str] = None) -> None:
 
     async with aiohttp.ClientSession() as client:
         for feed in _feeds:
-            tasks.append(asyncio.create_task(feed.fetch(client), name=feed.name))
+            tasks.append(asyncio.create_task(fetch(feed, client), name=feed.name))
 
         for task in tasks:
             entries.extend(await task)
