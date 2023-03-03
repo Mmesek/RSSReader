@@ -1,10 +1,10 @@
-import argparse
 from datetime import datetime, timedelta
 from html import escape
 
 from aiohttp import web
 from sqlalchemy import select
-from html2text import HTML2Text as h2t
+
+from mlib.database import AsyncSQL
 
 from RSS.utils import parse_ts
 from RSS.models import Feed_Post, Feed
@@ -100,8 +100,6 @@ async def new(request: web.Request):
         await session.commit()
     return web.Response()
 
-
-from rss.database import AsyncSQL
 
 db = AsyncSQL(url="postgresql+psycopg://postgres:postgres@r4/sa2")  # setup(parser)
 
