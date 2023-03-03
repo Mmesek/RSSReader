@@ -6,7 +6,7 @@ from sqlalchemy.orm import Mapped, Session, mapped_column, relationship as Relat
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mlib.database import ID, Timestamp, Base
-from rss.utils import log, PROCESSORS
+from RSS.utils import log, PROCESSORS
 
 
 def Field(foreign_key=None, **kwargs):
