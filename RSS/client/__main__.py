@@ -46,52 +46,68 @@ async def main(session: AsyncSession, feeds: list[str] = None) -> None:
     await session.commit()
 
 
-# @timed(msg="Fetched %s new entries from %s feed(s) in %s")
 async def fetch(feed: Feed, client: aiohttp.ClientSession) -> list["Feed_Post"]:
-    """Get new entries since last fetch"""
+    """
+    Get new entries since last fetch
+    
+    Params
+    ------
+    feed:
+        Feed to fetch
+    client:
+        Aiohttp's Client Session for async HTTP requests
+    """
     entries = []
+    NOW = datetime.now(tz=timezone.utc)
 
+    # Ensure ts has tz in an event where backend (SQLite) strips it away
     if not feed.timestamp.tzinfo:
         feed.timestamp = pytz.timezone("utc").localize(feed.timestamp)
 
-    if feed.refresh_rate and feed.refresh_rate > datetime.now(tz=timezone.utc) - feed.timestamp:
+    # Make sure refresh rate has already passed
+    if feed.refresh_rate and feed.refresh_rate > NOW - feed.timestamp:
         log.debug(
-            "Skipping %s as refresh rate (%s) interval didn't elapse since last post (%s) yet",
+            "Skipping %s as refresh (%s) interval didn't pass since last post (%s) yet",
             feed.name,
             feed.refresh_rate,
             feed.timestamp,
         )
         return entries
 
+    # Get feed with new entries
     result, status = await get(client, feed.url, modified=feed.timestamp.strftime("%a, %d %b %Y %H:%M:%S %Z"))
 
+    # There are no new entries
     if status == 304:
         log.debug("No new entries (Status code 304) on feed %s", feed.name)
         return entries
 
     _feed = feedparser.parse(result)
-
     _last_ts = feed.timestamp
+    cutoff = NOW - timedelta(7)
 
-    now = datetime.now(tz=timezone.utc)
-    cutoff = now - timedelta(7)
     for entry in _feed["entries"]:
         updated_ts = parse_ts(entry.get("updated", entry.get("published")))
         ts = parse_ts(entry["published"])
-
+        # Make sure update is consistently AFTER publish
         updated_ts, ts = max(updated_ts, ts), min(updated_ts, ts)
+
+        # Skip old entries
         if updated_ts < cutoff:
             continue
 
-        if updated_ts > now:
-            updated_ts = now
-        if ts > now:
-            ts = now
+        # Ensure ts is in the past
+        if updated_ts > NOW:
+            updated_ts = NOW
+        if ts > NOW:
+            ts = NOW
 
+        # If update was after last known ts, cache it
         if updated_ts > _last_ts:
             _last_ts = updated_ts
 
-        if ts <= feed.timestamp:
+        # Skip entry if it's before last known post
+        if updated_ts <= feed.timestamp:
             log.debug(
                 "Skipping entry (%s) due to timestamp (%s) being before last post (%s)",
                 entry.get("title", ""),
@@ -101,12 +117,25 @@ async def fetch(feed: Feed, client: aiohttp.ClientSession) -> list["Feed_Post"]:
             continue
 
         for _post in feed.posts:
+            # Check if any existing post has same URL
             if _post.url == entry.get("link"):
+                # Update existing post
                 post = _post
                 post.updated_at = updated_ts
                 post.summary = entry.get("summary", None)
                 break
+            # Check if any existing post has same title, author AND is within last 24h
+            elif (
+                post.title == entry.get("title")
+                and post.author == entry.get("author", None)
+                and post.updated_at - updated_ts <= timedelta(1)
+            ):
+                # Merge with existing post
+                if entry.get("description", "") not in _post.content:
+                    _post.content += "\n\n" + post.content
+                break
         else:
+            # Create new post
             post = Feed_Post(
                 url=entry.get("link"),
                 title=entry.get("title"),
@@ -122,24 +151,12 @@ async def fetch(feed: Feed, client: aiohttp.ClientSession) -> list["Feed_Post"]:
                 topic_analysis=None,
             )
 
-            for _post in feed.posts:
-                if (
-                    post.title == _post.title
-                    and post.author == _post.author
-                    and post.timestamp - _post.timestamp <= timedelta(1)
-                ):
-                    if post.content not in _post.content:
-                        _post.content += "\n\n" + post.content
-                    break
-            else:
-                entries.append(post)
-                feed.posts.append(post)
+            entries.append(post)
+            feed.posts.append(post)
 
+    # Ensure ts is in the past
     _ts = parse_ts(_feed["feed"]["updated"]) if "updated" in _feed["feed"] else _last_ts
-    if _ts > now:
-        _ts = now
-
-    feed.timestamp = _ts
+    feed.timestamp = _ts if _ts < NOW else NOW
 
     log.debug("Got %s new entries from feed %s", len(entries), feed.name)
     return entries
