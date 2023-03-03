@@ -11,11 +11,9 @@ from RSS.models import Feed_Post, Feed
 
 from .feed_generator import Atom_Generator, Atom_Item, RSS_Generator, RSS_Item
 
-parser = argparse.ArgumentParser()
-
 routes = web.RouteTableDef()
-
-h = h2t()
+Atom_Feed = Atom_Generator("Feed", "http://localhost:8080/feed", "feed", None, "mRSS")
+RSS_Channel = RSS_Generator("RSS", "http://localhost:8080/rss", generator="mRSS")
 
 
 async def get_posts(request: web.Request):
@@ -60,8 +58,7 @@ async def feed(request: web.Request):
         post.title = escape("@".join(post.title.split("@")[:-1]).strip() or post.title)
         items.append(Atom_Item.from_feed_post(post))
 
-    _feed = Atom_Generator("Feed", "http://localhost:8080/feed", "feed", None, "mRSS")
-    return build_response(_feed, items)
+    return build_response(Atom_Feed, items)
 
 
 @routes.get("/rss")
@@ -75,8 +72,7 @@ async def rss(request: web.Request):
         post.title = escape("@".join(post.title.split("@")[:-1]).strip() or post.title)
         items.append(RSS_Item.from_feed_post(post))
 
-    _feed = RSS_Generator("RSS", "http://localhost:8080/rss", generator="mRSS")
-    return build_response(_feed, items)
+    return build_response(RSS_Channel, items)
 
 
 @routes.post("/new")
