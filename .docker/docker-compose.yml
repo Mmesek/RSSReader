@@ -1,0 +1,54 @@
+services:
+  db:
+    image: postgres:alpine
+    container_name: Postgres
+    hostname: postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data:rw
+    expose:
+      - 5432
+    networks:
+      - rss
+  rss:
+    image: rss
+    build:
+      context: ..
+      dockerfile: .docker/Dockerfile
+      target: server
+    container_name: RSS
+    hostname: RSS
+    healthcheck:
+      test: [ "curl", "localhost:8080/ping" ]
+      interval: 1m
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    environment:
+      - TZ=utc
+    restart: unless-stopped
+    depends_on:
+      - db
+    networks:
+      - rss
+  client:
+    image: rss
+    build:
+      context: ..
+      dockerfile: .docker/Dockerfile
+      target: client
+    container_name: RSS_Client
+    hostname: RSS_Client
+    environment:
+      - TZ=utc
+    restart: unless-stopped
+    depends_on:
+      - db
+    networks:
+      - rss
+
+networks:
+  rss:
+    driver: bridge
