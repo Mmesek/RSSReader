@@ -1,9 +1,4 @@
-import asyncio, argparse
-import aiohttp
-import feedparser
-import aiohttp
-import pytz
-from datetime import datetime, timedelta, timezone
+import asyncio
 
 from typing import TYPE_CHECKING
 
@@ -15,12 +10,6 @@ if TYPE_CHECKING:
 from RSS.models import Feed
 from RSS.utils import setup
 from RSS.utils import log, get, parse_ts
-
-parser = argparse.ArgumentParser()
-parser.add_argument("--database", help="Path to database", default="localhost")
-parser.add_argument("--name", help="Name of database", default="RSS")
-parser.add_argument("feeds", nargs="*", help="List of feeds to fetch")
-parser.add_argument("--log", default="WARNING", help="Specifies logging level", choices=["DEBUG", "INFO", "WARNING"])
 
 
 async def main(session: AsyncSession, feeds: list[str] = None) -> None:
@@ -156,6 +145,6 @@ async def fetch(feed: Feed, client: aiohttp.ClientSession) -> list["Feed_Post"]:
 
 
 if __name__ == "__main__":
-    db = asyncio.run(setup(parser))
+    db = asyncio.run(setup())
 
     asyncio.run(main(db.session()))
