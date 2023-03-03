@@ -1,14 +1,14 @@
 import re
 import aiohttp
+
 from sqlalchemy import select
 from sqlalchemy.orm import Mapped, relationship as Relationship, selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from RSS.utils import log, send
+from RSS.models import ID, Timestamp, Feed, Field, Base, Feed_Post
 
 from formatters import LIMITS, Entry, REQUESTS
-
-from RSS.models import ID, Timestamp, Feed, Field, Base, Feed_Post
 
 
 class Subscription(Timestamp, Base):
@@ -46,11 +46,13 @@ class Subscription(Timestamp, Base):
         posts.sort(key=lambda x: x.timestamp)
         request = REQUESTS[self.webhook.platform]
 
-        for post in posts:
+        # Send only entries that match regex (if there is regex)
+        for post in filter(
+            lambda x: not self.regex or (self.search(x.title) or self.search(x.content or x.summary)), posts
+        ):
             entry = Entry(post)
-            if self.regex and not (self.search(entry.title) or self.search(entry.description)):
-                continue
 
+            # Group together entries with respect to platform limits
             if (
                 entry.total_characters + sum(i.total_characters for i in entries)
                 < LIMITS.get(self.webhook.platform).TOTAL
@@ -58,10 +60,12 @@ class Subscription(Timestamp, Base):
             ):
                 entries.append(entry)
             else:
+                # Send current group if next entry exceeeds limits
                 await send(client, self.webhook.url, json=request(self, entries).as_dict())
                 entries = []
 
         if entries:
+            # Send any remaining entries
             await send(client, self.webhook.url, json=request(self, entries).as_dict())
 
 
@@ -76,7 +80,8 @@ class Webhook(ID, Base):
 
     @property
     def platform(self) -> str:
-        return self.url.split("/", 1)[0].split(".")[-2]
+        """Extracts domain out of webhook's URL as platform name"""
+        return self.url.split("/", 1)[0].split(".")[-2].lower()
 
     @classmethod
     async def get(cls, session: AsyncSession) -> list["Webhook"]:
