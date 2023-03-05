@@ -95,4 +95,4 @@ async def get(client: ClientSession, url: str, modified: str) -> tuple[str | Non
 
 async def send(client: ClientSession, url: str, json: dict) -> bool:
     async with client.post(url, json=json) as res:
-        return await res.status == 200
+        return res.status == 200
