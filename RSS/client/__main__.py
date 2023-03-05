@@ -150,7 +150,8 @@ async def fetch(feed: Feed, client: aiohttp.ClientSession) -> list["Feed_Post"]:
             )
 
             entries.append(post)
-            feed.posts.append(post)
+            if feed.republish:
+                feed.posts.append(post)
 
     # Ensure ts is in the past
     _ts = parse_ts(_feed["feed"]["updated"]) if "updated" in _feed["feed"] else _last_ts

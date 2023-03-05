@@ -33,6 +33,8 @@ class Feed(Timestamp, ID, Base):
     fetch_content: Mapped[Optional[bool]]
     """Whether full content of the post should be fetched
     or formatting should be performed using RSS-supplied text"""
+    republish: Mapped[bool]
+    """Whether post should be cached in a database"""
 
     processors: list["Feed_Processor"] = Relationship("Feed_Processor", back_populates="feed")
     posts: list["Feed_Post"] = Relationship("Feed_Post", back_populates="feed")
