@@ -81,7 +81,7 @@ class Webhook(ID, Base):
     @property
     def platform(self) -> str:
         """Extracts domain out of webhook's URL as platform name"""
-        return self.url.split("/", 1)[0].split(".")[-2].lower()
+        return self.url.split("/")[2].split(".")[-2].lower()
 
     @classmethod
     async def get(cls, session: AsyncSession) -> list["Webhook"]:
