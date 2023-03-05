@@ -9,6 +9,7 @@ from RSS.models import Feed_Post
 from RSS.models import Feed
 from RSS.utils import setup
 from RSS.utils import log, get, parse_ts
+from RSS.webhooks.__main__ import main as webhook
 
 
 async def main(session: AsyncSession, feeds: list[str] = None) -> None:
@@ -26,7 +27,6 @@ async def main(session: AsyncSession, feeds: list[str] = None) -> None:
         Overwrite for feeds to fetch
     """
     _feeds: list[Feed] = await Feed.get(session, feeds)
-    entries = await fetch(_feeds, session)
 
     tasks: list[asyncio.Task] = []
     entries: list["Feed_Post"] = []
@@ -41,13 +41,15 @@ async def main(session: AsyncSession, feeds: list[str] = None) -> None:
     for entry in entries:
         await entry.process()
 
+    await webhook(session, entries)
+
     await session.commit()
 
 
 async def fetch(feed: Feed, client: aiohttp.ClientSession) -> list["Feed_Post"]:
     """
     Get new entries since last fetch
-    
+
     Params
     ------
     feed:
@@ -144,8 +146,8 @@ async def fetch(feed: Feed, client: aiohttp.ClientSession) -> list["Feed_Post"]:
                 timestamp=ts,
                 updated_at=updated_ts,
                 id=None,
-                feed_id=None,
-                feed=None,
+                feed_id=feed.id,
+                feed=feed,
                 topic_analysis=None,
             )
 
