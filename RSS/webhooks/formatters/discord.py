@@ -3,8 +3,10 @@ from RSS.webhooks.models import Subscription
 from mdiscord import Embed, Limits as DiscordLimits
 
 
-class Discord(BaseLimits, DiscordLimits):
+class Discord(BaseLimits):
     EMBEDS = 10
+    CONTENT = 2000
+    TOTAL = 6000
 
 
 def toMarkdown(html: str) -> str:
@@ -17,14 +19,15 @@ def toMarkdown(html: str) -> str:
 
 
 class Discord(Request):
-    content: str
-    username: str
-    avatar_url: str
-    embeds: list[Embed]
+    content: str = ""
+    username: str = None
+    avatar_url: str = None
+    embeds: list[Embed] = None
 
     def __init__(self, sub: Subscription, entries: list[Entry]) -> None:
-        if (sub.content or "") not in self.content:
+        if (sub.content or "") not in self.content and len(self.content) < Discord.CONTENT:
             self.content += " " + toMarkdown(sub.content)
+            self.content = self.content.strip()
         if not self.username:
             self.username = sub.feed.name
         if not self.avatar_url:

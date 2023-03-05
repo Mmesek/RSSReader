@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from RSS.utils import log, send
 from RSS.models import ID, Timestamp, Feed, Field, Base, Feed_Post
 
-from formatters import LIMITS, Entry, REQUESTS
+from .formatters import LIMITS, Entry, REQUESTS
 
 
 class Subscription(Timestamp, Base):
@@ -24,13 +24,14 @@ class Subscription(Timestamp, Base):
     feed: Feed = Relationship("Feed")
     """Associated Feed object"""
 
-    regex: Mapped[str] = Field(primary_key=True, default="")
-    """Regular expression that should be applied on entry's content"""
-    _compiled_regex: re.Pattern
+    content: Mapped[str] = None
+    """Content that should be sent alongside embed for this subscription"""
+
+    _compiled_regex: re.Pattern = None
     """Compiled regex pattern"""
 
-    content: Mapped[str]
-    """Content that should be sent alongside embed for this subscription"""
+    regex: Mapped[str] = Field(primary_key=True, default="")
+    """Regular expression that should be applied on entry's content"""
 
     def search(self, string: str) -> re.Match:
         """Compiles regex if not compiled already and searches provided string for a match"""

@@ -19,7 +19,7 @@ class Limits:
 class Entry:
     @property
     def total_characters(self) -> int:
-        return sum(self.description, self.author, self.title)
+        return sum(len(i) for i in [self.description, self.author, self.title])
 
     def __init__(self, post: "Feed_Post") -> None:
         self.description = post.content or post.summary
@@ -34,13 +34,13 @@ class Serializer:
     def as_dict(self):
         json = {}
         for attribute in self.__annotations__:
-            if self.__dict__[attribute]:
+            if attribute in self.__dict__:
                 json[attribute] = self.__dict__[attribute]
         return json
 
 
 class Request(Serializer):
-    def __init__(self, sub: Subscription, entries: list[Entry]) -> None:
+    def __init__(self, sub: "Subscription", entries: list[Entry]) -> None:
         raise NotImplementedError
 
     def __init_subclass__(cls) -> None:
