@@ -15,12 +15,13 @@ from .models import Webhook
 from .formatters import discord
 
 
-async def main(session: AsyncSession):
+async def main(session: AsyncSession, posts: list[Feed_Post] = None):
     tasks: list[asyncio.Task] = []
 
     async with aiohttp.ClientSession() as client:
         for webhook in await Webhook.get(session):
-            posts = await get_posts(session, webhook)
+            if not posts:
+                posts = await get_posts(session, webhook)
 
             # NOTE: Posts *could* be converted here and converted versions could be cached
             if task := group(webhook, posts, client):
