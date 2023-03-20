@@ -7,3 +7,4 @@ psycopg[binary]
 aiohttp
 python-dateutil
 pytz
+bs4
