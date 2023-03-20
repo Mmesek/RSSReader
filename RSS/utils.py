@@ -1,7 +1,7 @@
 import argparse, functools, os, logging
 from typing import Callable
 
-import pytz
+import pytz, re
 from aiohttp import ClientSession
 from datetime import datetime
 from dateutil import parser as dt_parser
@@ -10,6 +10,8 @@ from mlib.database import AsyncSQL
 from mlib.config import ConfigToDict
 
 log = logging.getLogger("RSS")
+
+RE_IMAGE_URL = re.compile(r"\[?\!\[(.*?)\]\(\S*\)")
 
 PROCESSORS: dict[str, list[Callable]] = {}
 """Registered Processors for RSS Sources"""

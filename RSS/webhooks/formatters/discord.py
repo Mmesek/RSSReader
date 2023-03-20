@@ -47,7 +47,26 @@ class Discord(Request):
             embed.set_footer(entry.author)
             embed.set_url(entry.url)
             embed.set_timestamp(entry.timestamp)
-            entry.description = toMarkdown(entry.description)
+
+            embed.set_color(entry.feed.color)
+            embed.set_image(entry.thumbnail_url)
+
+            description = entry.content or entry.summary
+
+            soup = bs(description, "lxml")
+            img = soup.find("img")
+            if not embed.image.url and img and not img.get("src", "").endswith("gif"):
+                embed.image.url = img.get("src", "")
+            description = toMarkdown(description).strip()
+
+            image = RE_IMAGE_URL.search(description)
+            if not embed.image.url and image:
+                embed.image.url = image
+            description = RE_IMAGE_URL.sub(image.group(1) if image else "", description)
+            description = re.split(rf"(Informacja|Artykuł|The post) \[?{re.escape(embed.title)}", description)[0]
+            description = description.replace("Czytaj więcej...", "").replace("Czytaj dalej", "")
+
+            entry.description = description
 
             if len(description) <= DiscordLimits.DESCRIPTION:
                 embed.set_description(description)
