@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from RSS.utils import log, send
 from RSS.models import ID, Timestamp, Feed, Field, Base, Feed_Post
 
-from .formatters import LIMITS, Entry, REQUESTS
+from .formatters import LIMITS, REQUESTS
 
 
 class Subscription(Timestamp, Base):
@@ -43,7 +43,7 @@ class Subscription(Timestamp, Base):
         return self._compiled_regex.search(string)
 
     async def send(self, client: aiohttp.ClientSession, posts: list[Feed_Post]):
-        entries: list[Entry] = []
+        entries: list[Feed_Post] = []
         posts.sort(key=lambda x: x.timestamp)
         request = REQUESTS[self.webhook.platform]
 
@@ -51,15 +51,13 @@ class Subscription(Timestamp, Base):
         for post in filter(
             lambda x: not self.regex or (self.search(x.title) or self.search(x.content or x.summary)), posts
         ):
-            entry = Entry(post)
-
             # Group together entries with respect to platform limits
             if (
-                entry.total_characters + sum(i.total_characters for i in entries)
+                post.total_characters + sum(i.total_characters for i in entries)
                 < LIMITS.get(self.webhook.platform).TOTAL
                 and len(entries) < LIMITS.get(self.webhook.platform).EMBEDS
             ):
-                entries.append(entry)
+                entries.append(post)
             else:
                 # Send current group if next entry exceeeds limits
                 await send(client, self.webhook.url, json=request(self, entries).as_dict())

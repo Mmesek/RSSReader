@@ -1,6 +1,13 @@
-from . import Entry, Limits as BaseLimits, Request
-from RSS.webhooks.models import Subscription
+import re
+
+from bs4 import BeautifulSoup as bs
 from mdiscord import Embed, Limits as DiscordLimits
+
+from RSS.models import Feed_Post
+from RSS.utils import RE_IMAGE_URL
+from RSS.webhooks.models import Subscription
+
+from . import Limits as BaseLimits, Request
 
 
 class Discord(BaseLimits):
@@ -24,7 +31,7 @@ class Discord(Request):
     avatar_url: str = None
     embeds: list[Embed] = None
 
-    def __init__(self, sub: Subscription, entries: list[Entry]) -> None:
+    def __init__(self, sub: Subscription, entries: list["Feed_Post"]) -> None:
         if (sub.content or "") not in self.content and len(self.content) < Discord.CONTENT:
             self.content += " " + toMarkdown(sub.content)
             self.content = self.content.strip()
@@ -42,9 +49,9 @@ class Discord(Request):
             embed.set_timestamp(entry.timestamp)
             entry.description = toMarkdown(entry.description)
 
-            if len(entry.description) <= DiscordLimits.DESCRIPTION:
-                embed.set_description(entry.description)
+            if len(description) <= DiscordLimits.DESCRIPTION:
+                embed.set_description(description)
             else:
-                embed.add_fields("\u200b", entry.description)
+                embed.add_fields("\u200b", description)
 
             self.embeds.append(embed.as_dict())

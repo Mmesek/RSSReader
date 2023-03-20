@@ -35,6 +35,8 @@ class Feed(Timestamp, ID, Base):
     or formatting should be performed using RSS-supplied text"""
     republish: Mapped[bool]
     """Whether post should be cached in a database"""
+    color: Mapped[str]
+    """Color of this feed. Generally theme color of a brand"""
 
     processors: list["Feed_Processor"] = Relationship("Feed_Processor", back_populates="feed")
     posts: list["Feed_Post"] = Relationship("Feed_Post", back_populates="feed")
@@ -123,3 +125,7 @@ class Feed_Post(Timestamp, ID, Base):
         for processor in sorted(self.feed.processors, key=lambda x: x.order):
             if await processor.run(self):
                 return
+
+    @property
+    def total_characters(self) -> int:
+        return sum(len(i) for i in [self.content or self.summary, self.author, self.title])
