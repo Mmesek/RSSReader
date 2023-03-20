@@ -88,5 +88,11 @@ class Webhook(ID, Base):
         stmt = select(cls).options(selectinload(cls.subscriptions))
         w = await session.execute(stmt)
         w = w.scalars().all()
+
+        # NOTE: Somehow this fixes lazyloading when accessing Subscription.webhook
+        for _ in w:
+            for s in _.subscriptions:
+                hasattr(s, "webhook")
+
         log.debug("Got (%s) webhooks from database", len(w))
         return w
