@@ -142,7 +142,10 @@ async def fetch(feed: Feed, client: aiohttp.ClientSession) -> list["Feed_Post"]:
                 content=entry.get("description", ""),
                 summary=entry.get("summary", None),
                 author=entry.get("author", None),
-                thumbnail_url=entry.get("image", None),
+                thumbnail_url=entry.get(
+                    "image",
+                    entry.get("thumbnail", next(filter(lambda x: "image" in x.type, entry.get("links", [])), None)),
+                ),
                 timestamp=ts,
                 updated_at=updated_ts,
                 id=None,
