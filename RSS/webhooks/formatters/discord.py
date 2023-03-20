@@ -10,10 +10,13 @@ from RSS.webhooks.models import Subscription
 from . import Limits as BaseLimits, Request
 
 
-class Limits(BaseLimits):
+class Discord(BaseLimits):
     EMBEDS = 10
     CONTENT = 2000
     TOTAL = 6000
+
+
+Limits = Discord
 
 
 def toMarkdown(html: str) -> str:
