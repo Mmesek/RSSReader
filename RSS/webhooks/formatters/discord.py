@@ -10,7 +10,7 @@ from RSS.webhooks.models import Subscription
 from . import Limits as BaseLimits, Request
 
 
-class Discord(BaseLimits):
+class Limits(BaseLimits):
     EMBEDS = 10
     CONTENT = 2000
     TOTAL = 6000
@@ -32,7 +32,7 @@ class Discord(Request):
     embeds: list[Embed] = None
 
     def __init__(self, sub: Subscription, entries: list["Feed_Post"]) -> None:
-        if (sub.content or "") not in self.content and len(self.content) < Discord.CONTENT:
+        if (sub.content or "") not in self.content and len(self.content) < Limits.CONTENT:
             self.content += " " + toMarkdown(sub.content)
             self.content = self.content.strip()
         if not self.username:
