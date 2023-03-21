@@ -10,6 +10,8 @@ from RSS.utils import setup
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
+from RSS.utils import log
+
 from .models import Webhook
 
 from .formatters import discord
@@ -48,6 +50,7 @@ def group(webhook: Webhook, posts: list[Feed_Post], client: aiohttp.ClientSessio
 
             # Convert and Send new entries
             # NOTE: Work duplication on convert step per webhook!
+            log.info("Sending (%s) posts to subscription (%s) on feed %s", len(_posts), sub.id, sub.feed_id)
             return asyncio.create_task(sub.send(client, _posts))
 
 
@@ -60,7 +63,9 @@ async def get_posts(session: AsyncSession, webhook: Webhook) -> list[Feed_Post]:
         stmt = stmt.where(Feed_Post.feed_id == feed_id, Feed_Post.timestamp > timestamp)
 
     r = await session.execute(stmt)
-    return r.scalars().all()
+    posts = r.scalars().all()
+    log.info("Got (%s) posts from database", len(posts))
+    return posts
 
 
 if __name__ == "__main__":

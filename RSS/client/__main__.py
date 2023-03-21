@@ -66,7 +66,7 @@ async def fetch(feed: Feed, client: aiohttp.ClientSession) -> list["Feed_Post"]:
 
     # Make sure refresh rate has already passed
     if feed.refresh_rate and feed.refresh_rate > NOW - feed.timestamp:
-        log.debug(
+        log.info(
             "Skipping %s as refresh (%s) interval didn't pass since last post (%s) yet",
             feed.name,
             feed.refresh_rate,
@@ -79,12 +79,13 @@ async def fetch(feed: Feed, client: aiohttp.ClientSession) -> list["Feed_Post"]:
 
     # There are no new entries
     if status == 304:
-        log.debug("No new entries (Status code 304) on feed %s", feed.name)
+        log.info("No new entries (Status code 304) on feed %s", feed.name)
         return entries
 
     _feed = feedparser.parse(result)
     _last_ts = feed.timestamp
     cutoff = NOW - timedelta(7)
+    _skips = 0
 
     for entry in _feed["entries"]:
         updated_ts = parse_ts(entry.get("updated", entry.get("published")))
@@ -114,12 +115,14 @@ async def fetch(feed: Feed, client: aiohttp.ClientSession) -> list["Feed_Post"]:
                 ts,
                 feed.timestamp,
             )
+            _skips += 1
             continue
 
         for _post in feed.posts:
             # Check if any existing post has same URL
             if _post.url == entry.get("link"):
                 # Update existing post
+                log.debug("Detected same URL (%s). Updating existing post (%s)", _post.url, _post.title)
                 post = _post
                 post.updated_at = updated_ts
                 post.summary = entry.get("summary", None)
@@ -130,6 +133,7 @@ async def fetch(feed: Feed, client: aiohttp.ClientSession) -> list["Feed_Post"]:
                 and post.author == entry.get("author", None)
                 and post.updated_at - updated_ts <= timedelta(1)
             ):
+                log.debug("Detected same title/author/timestamp combination (%s). Merging content", _post.title)
                 # Merge with existing post
                 if entry.get("description", "") not in _post.content:
                     _post.content += "\n\n" + post.content
@@ -153,16 +157,19 @@ async def fetch(feed: Feed, client: aiohttp.ClientSession) -> list["Feed_Post"]:
                 feed=feed,
                 topic_analysis=None,
             )
+            log.debug("Creating new post (%s)", post.title)
 
             entries.append(post)
             if feed.republish:
                 feed.posts.append(post)
 
+    log.info("Skipped %s entries as their timestamp was before last known post", _skips)
+
     # Ensure ts is in the past
     _ts = parse_ts(_feed["feed"]["updated"]) if "updated" in _feed["feed"] else _last_ts
     feed.timestamp = _ts if _ts < NOW else NOW
 
-    log.debug("Got %s new entries from feed %s", len(entries), feed.name)
+    log.info("Got %s new entries from feed %s", len(entries), feed.name)
     return entries
 
 

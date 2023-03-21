@@ -60,11 +60,13 @@ class Subscription(Timestamp, Base):
                 entries.append(post)
             else:
                 # Send current group if next entry exceeeds limits
+                log.debug("Sending (%s) entries to webhook %s", len(entries), self.feed.name)
                 await send(client, self.webhook.url, json=request(self, entries).as_dict())
                 entries = []
 
         if entries:
             # Send any remaining entries
+            log.debug("Sending (%s) entries to webhook %s", len(entries), self.feed.name)
             await send(client, self.webhook.url, json=request(self, entries).as_dict())
 
 
@@ -94,5 +96,5 @@ class Webhook(ID, Base):
             for s in _.subscriptions:
                 hasattr(s, "webhook")
 
-        log.debug("Got (%s) webhooks from database", len(w))
+        log.info("Got (%s) webhooks from database", len(w))
         return w

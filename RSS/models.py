@@ -58,7 +58,7 @@ class Feed(Timestamp, ID, Base):
 
         f = await session.execute(stmt)
         f = f.scalars().all()
-        log.debug("Got (%s) feed sources from database", len(f))
+        log.info("Got (%s) feed sources from database", len(f))
         return f
 
     @classmethod
@@ -69,7 +69,7 @@ class Feed(Timestamp, ID, Base):
             stmt = stmt.where(cls.name.in_(feeds))
 
         f = session.execute(stmt).scalars().all()
-        log.debug("Got (%s) feed sources from database", len(f))
+        log.info("Got (%s) feed sources from database", len(f))
         return f
 
 
