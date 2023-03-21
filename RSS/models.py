@@ -114,7 +114,7 @@ class Feed_Post(Timestamp, ID, Base):
     """Author of Post"""
     thumbnail_url: Mapped[Optional[str]]
     """URL to Post's Thumbnail"""
-    updated_at: Mapped[Optional[datetime]] = Field(TIMESTAMP(timezone=True), server_default=func.now())
+    updated_at: Mapped[Optional[datetime]] = mapped_column(TIMESTAMP(timezone=True), server_default=func.now())
     """Timestamp when Post was updated"""
     # tags: Mapped[list[str]]
     """Tags used in this post"""
