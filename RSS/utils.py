@@ -57,8 +57,9 @@ def timed(func=None, msg: str = ""):
     return inner
 
 
-async def setup(*args):
-    db = AsyncSQL(url="postgresql+psycopg://postgres:postgres@db/RSS")
+async def setup(*args, echo=False):
+    db = AsyncSQL(url="postgresql+psycopg://postgres:postgres@db/RSS", echo=echo)
+    log.setLevel("DEBUG")
     await db.create_tables()
     return db
 
