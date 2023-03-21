@@ -65,7 +65,10 @@ async def get_posts(session: AsyncSession, webhook: Webhook) -> list[Feed_Post]:
 
     r = await session.execute(stmt)
     posts = r.scalars().all()
-    log.info("Got (%s) posts from database", len(posts))
+
+    if posts:
+        log.info("Got (%s) posts from database", len(posts))
+
     return posts
 
 
