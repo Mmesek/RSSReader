@@ -172,8 +172,8 @@ async def fetch(feed: Feed, client: aiohttp.ClientSession) -> list["Feed_Post"]:
     _ts = parse_ts(_feed["feed"]["updated"]) if "updated" in _feed["feed"] else _last_ts
     feed.timestamp = _ts if _ts < NOW else NOW
 
-    if entries:
-        log.info("Got %s new entries from feed %s", len(entries), feed.name)
+    if len(entries) - _skips:
+        log.info("Got %s new entries from feed %s", len(entries) - _skips, feed.name)
 
     return entries
 
