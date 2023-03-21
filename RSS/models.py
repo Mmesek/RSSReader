@@ -1,7 +1,7 @@
 from typing import Optional, Any, Callable
 from datetime import datetime, timedelta
 
-from sqlalchemy import select, func, ForeignKey
+from sqlalchemy import select, func, ForeignKey, TIMESTAMP
 from sqlalchemy.orm import Mapped, Session, mapped_column, relationship as Relationship, selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -114,7 +114,7 @@ class Feed_Post(Timestamp, ID, Base):
     """Author of Post"""
     thumbnail_url: Mapped[Optional[str]]
     """URL to Post's Thumbnail"""
-    updated_at: Mapped[Optional[datetime]]
+    updated_at: Mapped[Optional[datetime]] = Field(TIMESTAMP(timezone=True), server_default=func.now())
     """Timestamp when Post was updated"""
     # tags: Mapped[list[str]]
     """Tags used in this post"""
