@@ -26,8 +26,7 @@ async def main(session: AsyncSession, posts: list[Feed_Post] = None):
                 posts = await get_posts(session, webhook)
 
             # NOTE: Posts *could* be converted here and converted versions could be cached
-            if task := group(webhook, posts, client):
-                tasks.append(task)
+            tasks.extend(group(webhook, posts, client))
 
         for task in tasks:
             await task
@@ -36,8 +35,9 @@ async def main(session: AsyncSession, posts: list[Feed_Post] = None):
     await session.commit()
 
 
-def group(webhook: Webhook, posts: list[Feed_Post], client: aiohttp.ClientSession) -> asyncio.Task:
+def group(webhook: Webhook, posts: list[Feed_Post], client: aiohttp.ClientSession) -> list[asyncio.Task]:
     """Creates async tasks sending posts to subscribing webhooks"""
+    _tasks = []
     for feed_id, _posts in groupby(posts, key=lambda x: x.feed_id):
         # Get subscription for this feed
         if not (sub := next(filter(lambda x: x.feed_id == feed_id, webhook.subscriptions), None)):
@@ -51,7 +51,8 @@ def group(webhook: Webhook, posts: list[Feed_Post], client: aiohttp.ClientSessio
             # Convert and Send new entries
             # NOTE: Work duplication on convert step per webhook!
             log.info("Sending (%s) posts to subscription (%s) on feed %s", len(_posts), sub.id, sub.feed_id)
-            return asyncio.create_task(sub.send(client, _posts))
+            _tasks.append(asyncio.create_task(sub.send(client, _posts)))
+    return _tasks
 
 
 async def get_posts(session: AsyncSession, webhook: Webhook) -> list[Feed_Post]:
