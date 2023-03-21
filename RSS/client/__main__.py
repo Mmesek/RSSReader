@@ -129,14 +129,14 @@ async def fetch(feed: Feed, client: aiohttp.ClientSession) -> list["Feed_Post"]:
                 break
             # Check if any existing post has same title, author AND is within last 24h
             elif (
-                post.title == entry.get("title")
-                and post.author == entry.get("author", None)
-                and post.updated_at - updated_ts <= timedelta(1)
+                _post.title == entry.get("title")
+                and _post.author == entry.get("author", None)
+                and _post.updated_at - updated_ts <= timedelta(1)
             ):
                 log.debug("Detected same title/author/timestamp combination (%s). Merging content", _post.title)
                 # Merge with existing post
                 if entry.get("description", "") not in _post.content:
-                    _post.content += "\n\n" + post.content
+                    _post.content += "\n\n" + entry.get("description", "")
                 break
         else:
             # Create new post
