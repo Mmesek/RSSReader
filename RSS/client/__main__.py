@@ -88,6 +88,7 @@ async def fetch(feed: Feed, client: aiohttp.ClientSession) -> list["Feed_Post"]:
     _skips = 0
 
     for entry in _feed["entries"]:
+        _skip = False
         updated_ts = parse_ts(entry.get("updated", entry.get("published")))
         ts = parse_ts(entry["published"])
         # Make sure update is consistently AFTER publish
@@ -116,11 +117,11 @@ async def fetch(feed: Feed, client: aiohttp.ClientSession) -> list["Feed_Post"]:
                 feed.timestamp,
             )
             _skips += 1
-            continue
+            _skip = True
 
         for _post in feed.posts:
             # Check if any existing post has same URL
-            if _post.url == entry.get("link"):
+            if _post.url == entry.get("link") and not _skip:
                 # Update existing post
                 log.debug("Detected same URL (%s). Updating existing post (%s)", _post.url, _post.title)
                 post = _post
@@ -132,6 +133,7 @@ async def fetch(feed: Feed, client: aiohttp.ClientSession) -> list["Feed_Post"]:
                 _post.title == entry.get("title")
                 and _post.author == entry.get("author", None)
                 and _post.updated_at - updated_ts <= timedelta(1)
+                and not _skip
             ):
                 log.debug("Detected same title/author/timestamp combination (%s). Merging content", _post.title)
                 # Merge with existing post
@@ -160,7 +162,7 @@ async def fetch(feed: Feed, client: aiohttp.ClientSession) -> list["Feed_Post"]:
             log.debug("Creating new post (%s)", post.title)
 
             entries.append(post)
-            if feed.republish:
+            if feed.republish and not _skip:
                 feed.posts.append(post)
 
     if _skips:
