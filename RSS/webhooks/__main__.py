@@ -41,6 +41,7 @@ def group(webhook: Webhook, posts: list[Feed_Post], client: aiohttp.ClientSessio
     for feed_id, _posts in groupby(posts, key=lambda x: x.feed_id):
         # Get subscription for this feed
         if not (sub := next(filter(lambda x: x.feed_id == feed_id, webhook.subscriptions), None)):
+            log.debug("Webhook %s is not subscribing to feed %s", webhook.id, sub.feed_id)
             continue
 
         # Filter posts for this subscription

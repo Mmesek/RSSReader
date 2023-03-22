@@ -96,6 +96,7 @@ async def fetch(feed: Feed, client: aiohttp.ClientSession) -> list["Feed_Post"]:
 
         # Skip old entries
         if updated_ts < cutoff:
+            log.debug("Skipping entry (%s) as it's too far in the past", entry.get("title", ""))
             continue
 
         # Ensure ts is in the past
