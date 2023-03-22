@@ -1,4 +1,4 @@
-import asyncio
+import asyncio, time
 import aiohttp, feedparser, pytz
 
 from datetime import datetime, timedelta, timezone
@@ -30,6 +30,7 @@ async def main(session: AsyncSession, feeds: list[str] = None) -> None:
 
     tasks: list[asyncio.Task] = []
     entries: list["Feed_Post"] = []
+    _start = time.perf_counter()
 
     async with aiohttp.ClientSession() as client:
         for feed in _feeds:
@@ -38,8 +39,13 @@ async def main(session: AsyncSession, feeds: list[str] = None) -> None:
         for task in tasks:
             entries.extend(await task)
 
+    _end = time.perf_counter()
+    log.info("Completed fetching out %s feed(s) in %s", len(_feeds), _start - _end)
+
     for entry in entries:
         await entry.process()
+
+    log.info("Completed processing out %s post(s) in %s", len(entries), _end - time.perf_counter())
 
     await webhook(session, entries)
 

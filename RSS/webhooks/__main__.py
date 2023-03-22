@@ -1,5 +1,6 @@
 import aiohttp
 import asyncio
+import time
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from itertools import groupby
@@ -19,6 +20,7 @@ from .formatters import discord
 
 async def main(session: AsyncSession, posts: list[Feed_Post] = None):
     tasks: list[asyncio.Task] = []
+    _start = time.perf_counter()
 
     async with aiohttp.ClientSession() as client:
         for webhook in await Webhook.get(session):
@@ -30,6 +32,8 @@ async def main(session: AsyncSession, posts: list[Feed_Post] = None):
 
         for task in tasks:
             await task
+
+    log.info("Completed sending out %s webhook(s) in %s", len(tasks), _start - time.perf_counter())
 
     # Save changed timestamps
     await session.commit()
