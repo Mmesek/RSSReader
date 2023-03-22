@@ -33,7 +33,7 @@ async def main(session: AsyncSession, posts: list[Feed_Post] = None):
         for task in tasks:
             await task
 
-    log.info("Completed sending out %s webhook(s) in %s", len(tasks), _start - time.perf_counter())
+    log.info("Completed sending out %s webhook(s) in %s", len(tasks), time.perf_counter() - _start)
 
     # Save changed timestamps
     await session.commit()
@@ -45,7 +45,7 @@ def group(webhook: Webhook, posts: list[Feed_Post], client: aiohttp.ClientSessio
     for feed_id, _posts in groupby(posts, key=lambda x: x.feed_id):
         # Get subscription for this feed
         if not (sub := next(filter(lambda x: x.feed_id == feed_id, webhook.subscriptions), None)):
-            log.debug("Webhook %s is not subscribing to feed %s", webhook.id, sub.feed_id)
+            log.debug("Webhook %s is not subscribing to feed %s", webhook.id, feed_id)
             continue
 
         # Filter posts for this subscription

@@ -40,12 +40,12 @@ async def main(session: AsyncSession, feeds: list[str] = None) -> None:
             entries.extend(await task)
 
     _end = time.perf_counter()
-    log.info("Completed fetching out %s feed(s) in %s", len(_feeds), _start - _end)
+    log.info("Completed fetching out %s feed(s) in %s", len(_feeds), _end - _start)
 
     for entry in entries:
         await entry.process()
 
-    log.info("Completed processing out %s post(s) in %s", len(entries), _end - time.perf_counter())
+    log.info("Completed processing out %s post(s) in %s", len(entries), time.perf_counter() - _end)
 
     await webhook(session, entries)
 
