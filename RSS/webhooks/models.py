@@ -33,6 +33,9 @@ class Subscription(Timestamp, Base):
     regex: Mapped[str] = Field(primary_key=True, default="")
     """Regular expression that should be applied on entry's content"""
 
+    only_new: Mapped[bool] = Field(default=False)
+    """Whether to only send new entries or also include updated ones"""
+
     def search(self, string: str) -> re.Match:
         """Compiles regex if not compiled already and searches provided string for a match"""
         if not self._compiled_regex:
