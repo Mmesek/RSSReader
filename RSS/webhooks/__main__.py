@@ -52,7 +52,7 @@ def group(webhook: Webhook, posts: list[Feed_Post], client: aiohttp.ClientSessio
         if _posts := list(
             filter(
                 lambda x: x.feed_id == sub.feed_id
-                and (x.timestamp > sub.timestamp if sub.only_new else Feed_Post.updated_at > sub.timestamp),
+                and (x.timestamp if sub.only_new else Feed_Post.updated_at) > sub.timestamp,
                 _posts,
             )
         ):
@@ -74,7 +74,7 @@ async def get_posts(session: AsyncSession, webhook: Webhook) -> list[Feed_Post]:
     for sub in webhook.subscriptions:
         stmt = stmt.where(
             Feed_Post.feed_id == sub.feed_id,
-            Feed_Post.timestamp > sub.timestamp if sub.only_new else Feed_Post.updated_at > sub.timestamp,
+            (Feed_Post.timestamp if sub.only_new else Feed_Post.updated_at) > sub.timestamp,
         )
 
     r = await session.execute(stmt)
