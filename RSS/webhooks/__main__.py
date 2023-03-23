@@ -51,8 +51,7 @@ def group(webhook: Webhook, posts: list[Feed_Post], client: aiohttp.ClientSessio
         # Filter posts for this subscription
         if _posts := list(
             filter(
-                lambda x: x.feed_id == sub.feed_id
-                and (x.timestamp if sub.only_new else Feed_Post.updated_at) > sub.timestamp,
+                lambda x: x.feed_id == sub.feed_id and (x.timestamp if sub.only_new else x.updated_at) > sub.timestamp,
                 _posts,
             )
         ):
