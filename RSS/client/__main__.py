@@ -37,7 +37,10 @@ async def main(session: AsyncSession, feeds: list[str] = None) -> None:
             tasks.append(asyncio.create_task(fetch(feed, client), name=feed.name))
 
         for task in tasks:
-            entries.extend(await task)
+            try:
+                entries.extend(await task)
+            except asyncio.TimeoutError:
+                log.warning("Feed %s timed out", task.get_name())
 
     _end = time.perf_counter()
     log.info("Completed fetching out %s feed(s) in %s", len(_feeds), _end - _start)
