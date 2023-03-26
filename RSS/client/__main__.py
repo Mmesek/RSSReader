@@ -32,7 +32,7 @@ async def main(session: AsyncSession, feeds: list[str] = None) -> None:
     entries: list["Feed_Post"] = []
     _start = time.perf_counter()
 
-    async with aiohttp.ClientSession() as client:
+    async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=15)) as client:
         for feed in _feeds:
             tasks.append(asyncio.create_task(fetch(feed, client), name=feed.name))
 
