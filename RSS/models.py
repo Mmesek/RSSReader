@@ -128,4 +128,4 @@ class Feed_Post(Timestamp, ID, Base):
 
     @property
     def total_characters(self) -> int:
-        return sum(len(i) for i in [self.content or self.summary, self.author, self.title])
+        return sum(len(i or "") for i in [self.content or self.summary, self.author, self.title])
