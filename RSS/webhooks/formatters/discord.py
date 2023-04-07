@@ -64,7 +64,7 @@ class Discord(Request):
 
             image = RE_IMAGE_URL.search(description)
             if not embed.image.url and image:
-                embed.image.url = image
+                embed.image.url = image.group(1)
             description = RE_IMAGE_URL.sub(image.group(1) if image else "", description)
             description = re.split(rf"(Informacja|Artykuł|The post) \[?{re.escape(embed.title)}", description)[0]
             description = description.replace("Czytaj więcej...", "").replace("Czytaj dalej", "")
