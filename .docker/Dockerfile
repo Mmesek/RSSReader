@@ -1,8 +1,12 @@
 FROM python:3.11-slim as base
 
-RUN apt-get update && apt-get install -y --no-install-recommends git
+RUN apt-get update \
+    && export DEBIAN_FRONTEND=noninteractive \
+    && apt-get install -y --no-install-recommends git \
+    && apt-get clean \
+    && apt-get autoremove
 
-COPY requirements.txt requirements.txt
+COPY requirements.txt ./
 RUN python -m pip --disable-pip-version-check --no-cache-dir install -r requirements.txt \ 
     && rm -rf requirements.txt
 
