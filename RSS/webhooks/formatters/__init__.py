@@ -31,3 +31,11 @@ class Request(Serializer):
 
     def __init_subclass__(cls) -> None:
         REQUESTS[cls.__name__.lower()] = cls
+
+
+def load_formatters():
+    import pkgutil, sys, importlib
+
+    for _, package_name, _ in pkgutil.iter_modules(["formatters"]):
+        if package_name not in sys.modules:
+            importlib.import_module(package_name)
