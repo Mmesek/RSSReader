@@ -97,7 +97,7 @@ async def new(request: web.Request):
     return web.Response()
 
 
-db = AsyncSQL(url="postgresql+psycopg://postgres:postgres@r4/sa2")  # setup(parser)
+db = AsyncSQL(url="postgresql+psycopg://postgres:postgres@db/RSS")  # setup(parser)
 
 
 def run():
