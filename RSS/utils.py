@@ -1,4 +1,4 @@
-import argparse, functools, os, logging
+import argparse, functools, os, logging, asyncio
 from typing import Callable
 
 import pytz, re
@@ -21,6 +21,12 @@ PRE_PROCESSORS: dict[str, list[Callable]] = {}
 
 POST_PROCESSORS: dict[str, list[Callable]] = {}
 """Registered Post Processors (Summarizing, Extracting) for RSS Entries"""
+
+
+import sys
+
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 
 def processor(cls: Callable = None, source: str = None, registry: dict[str, list[Callable]] = PROCESSORS):
