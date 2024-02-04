@@ -30,8 +30,14 @@ class Subscription(Timestamp, Base):
     _compiled_regex: re.Pattern = None
     """Compiled regex pattern"""
 
+    _compiled_blacklist: re.Pattern = None
+    """Compiled blacklist regex pattern"""
+
     regex: Mapped[str] = Field(primary_key=True, default="")
     """Regular expression that should be applied on entry's content"""
+
+    regex_blacklist: Mapped[str] = Field(primary_key=True, default="")
+    """Regular expression that should be skip if found on entry's content"""
 
     only_new: Mapped[bool] = Field(default=False)
     """Whether to only send new entries or also include updated ones"""
@@ -45,6 +51,15 @@ class Subscription(Timestamp, Base):
         log.debug("Searching for Match by Regex %s", self.regex)
         return self._compiled_regex.search(string)
 
+    def check_blacklist(self, string: str) -> re.Match:
+        """Compiles regex if not compiled already and searches provided string for a match"""
+        if not self._compiled_blacklist:
+            log.debug("Compiling regex %s", self.regex_blacklist)
+            self._compiled_blacklist = re.compile(self.regex_blacklist)
+
+        log.debug("Searching for Blacklist by Regex %s", self.regex_blacklist)
+        return self._compiled_blacklist.search(string)
+
     async def send(self, client: aiohttp.ClientSession, posts: list[Feed_Post]):
         entries: list[Feed_Post] = []
         posts.sort(key=lambda x: x.timestamp)
@@ -52,7 +67,11 @@ class Subscription(Timestamp, Base):
 
         # Send only entries that match regex (if there is regex)
         for post in filter(
-            lambda x: not self.regex or (self.search(x.title) or self.search(x.content or x.summary)), posts
+            lambda x: not self.regex
+            or (self.search(x.title) or self.search(x.content or x.summary))
+            and not self.regex_blacklist
+            or self.check_blacklist(x.title),
+            posts,
         ):
             # Group together entries with respect to platform limits
             if (
