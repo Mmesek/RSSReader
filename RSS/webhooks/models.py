@@ -69,8 +69,7 @@ class Subscription(Timestamp, Base):
         for post in filter(
             lambda x: not self.regex
             or (self.search(x.title) or self.search(x.content or x.summary))
-            and not self.regex_blacklist
-            or self.check_blacklist(x.title),
+            and not (self.regex_blacklist or self.check_blacklist(x.title)),
             posts,
         ):
             # Group together entries with respect to platform limits
