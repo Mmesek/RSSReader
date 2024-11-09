@@ -1,16 +1,21 @@
-FROM python:3.11-slim as base
+FROM cgr.dev/chainguard/python:latest-dev AS dev
 
-RUN apt-get update \
-    && export DEBIAN_FRONTEND=noninteractive \
-    && apt-get install -y --no-install-recommends git \
-    && apt-get clean \
-    && apt-get autoremove
+ENV PATH="/app/.venv/bin:$PATH"
+ENV PYTHONBUFFERED=1
 
+WORKDIR /app
+
+RUN python -m venv /app/.venv
 COPY requirements.txt ./
-RUN python -m pip --disable-pip-version-check --no-cache-dir install -r requirements.txt \ 
-    && rm -rf requirements.txt
+RUN python -m pip --disable-pip-version-check --no-cache-dir install -r requirements.txt
 
-RUN apt-get remove -y git && apt-get -y autoremove
+FROM cgr.dev/chainguard/python:latest
+
+ENV PATH="/app/.venv/bin:$PATH"
+ENV PYTHONBUFFERED=1
+
+COPY --from=dev /app/.venv /app/.venv
+WORKDIR /app
 
 COPY ["RSS/models.py", "RSS/utils.py", "RSS/"]
 COPY ["RSS/client/__main__.py", "RSS/client/__main__.py"]
